@@ -7,7 +7,7 @@ import calendar
 
 
 root=Tk()
-theLabel=Label(root, text='Ma che fai?')
+theLabel=Label(root, text='I am LaBaffa')
 theLabel.pack()
 root.mainloop()
 
