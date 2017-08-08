@@ -56,8 +56,8 @@ class Calendar(tk.Frame):
         #!!!
 
         
-        # remove custom options from kw
-        # before initializating ttk.Frame
+        ## Remove custom options from kw
+        ## before initializating ttk.Frame
         fwday = kw.pop('firstweekday', calendar.MONDAY)
         year = kw.pop('year', self.datetime.now().year)
         month = kw.pop('month', self.datetime.now().month)
@@ -68,7 +68,7 @@ class Calendar(tk.Frame):
 
         # Interesting how they are assigned
         # (Calendar_widget does not inherit from datetime or calendar)
-        self._today = self.datetime(year,month,today) # added by me
+        self._today = self.datetime(year,month,today) # today
         self._date = self.datetime(year, month, 1) # first of month
         self._selection = None # no date selected
         
@@ -78,10 +78,10 @@ class Calendar(tk.Frame):
         self.w_list=[] # labels with days of weekdays
         self.dates_ls=[] # grid of dates month
         self._place_widgets() # pack or grid widgets
-        self._conf_calendar() # setup column and mode (dont know)
+        self._conf_calendar() # setup  things (not implemented yet)
         self._build_calendar() # insert data in the month calendar
         
-    # special methods
+    ## Special methods
     def __setitem__(self, item, value):
         pass
 
@@ -93,13 +93,15 @@ class Calendar(tk.Frame):
 
     
     def _place_widgets(self):
+        # a font used (to do in a self.config method)
         myfont=tkFont.Font(family='Helvetica',
                                   size=10,
                                  weight=tkFont.BOLD)
         
-        #!! FIX: Variable size of header
+       
         
-        # place and size of the frames in Calendar
+        ## Place and size of the frames in Calendar
+        ## insert this part after for better comprehension
         self.columnconfigure(0,weight=1) #fill X
         self.grid_rowconfigure(0,weight=0) #hframe row position
         self.rowconfigure(1,weight=0) #wframe row position
@@ -107,18 +109,18 @@ class Calendar(tk.Frame):
         
         # header frame and its widgets
         hframe = tk.Frame(self,
-                          bg='#DEE1DB') # buttons and header(month,year)
+                          bg='#DEE1DB') # buttons and header (on top)
 
         
-        lbtn = tk.Button(hframe, text='<',
+        lbtn = tk.Button(hframe, text='<', #change month button
                           bg='white',
-                         highlightthickness=2,
-                         highlightbackground='#F6E8FF',
+                         highlightthickness=2, #border 
+                         highlightbackground='#F6E8FF',#border color
                           command=self._prev_month) # prev month
         lbtn.config(font=myfont)
 
         
-        rbtn = tk.Button(hframe, text='>',
+        rbtn = tk.Button(hframe, text='>', #change month button
                          bg='white',
                          highlightthickness=2,
                          highlightbackground='#F6E8FF',
@@ -131,6 +133,7 @@ class Calendar(tk.Frame):
                                  anchor='center') # header
         self._header.config(font=myfont)
 
+        
         # the calendar (changed from Treeview object)
         # now two frames: day-names (fixed size, or nearly)
         #                 dates (size grows with the object)
@@ -139,12 +142,13 @@ class Calendar(tk.Frame):
         cframe = tk.Frame(self) # dates frame
 
 
-        # Pack/grid frames and widgets
+        
+        ## Pack/grid frames and widgets
 
         #hframe and its widgets
         hframe.grid(row=0,
                     column = 0,sticky='we',
-                    ipadx=2,ipady=2) # check for stickiness
+                    ipadx=2,ipady=2) 
         
         
         
@@ -168,7 +172,7 @@ class Calendar(tk.Frame):
                     column=0,
                     sticky='we',
                     ipady=5)  
-        # inserting names
+        #inserting names
         names = self._cal.formatweekheader(3).split()
         for i, name in enumerate(names):
             self.w_list.append(tk.Label(wframe,
@@ -217,24 +221,17 @@ class Calendar(tk.Frame):
         ndays = calendar.monthrange(year,month)[1] #days in the month
         
         for i,date in enumerate(self.dates_ls):
-            shift=i-fday
+            shift=i-fday #back to the monday of the first week, then on
             day=self._date + self.timedelta(days=shift) 
             date['text']=str(day.day)
             date['fg'] = 'black' if shift in range(ndays) else '#D3D7CF'
             date['bg'] = '#F6E8FF' if day==self._today else 'white'
-        # n = [i for i in self._cal.itermonthdays(year,month)]    
-        # for i,date in enumerate(self.dates_ls):
-        #     #!! FIX: add days of prev and next months
-        #     try:
-        #         date['text'] = str(n[i]) if n[i] else ''
-        #     except IndexError: # when len(n)<len(dates_ls)
-        #         date['text']=''
-
+        
             
     def _prev_month(self):
         self._date = self._date - self.timedelta(days=1)
         self._date = self.datetime(self._date.year, self._date.month, 1)
-        self._build_calendar() # reconstuct calendar
+        self._build_calendar() # reconstruct calendar
 
 
     def _next_month(self):
