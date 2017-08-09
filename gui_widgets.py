@@ -2,7 +2,7 @@ import calendar
 import datetime
 import ttk
 from time import sleep
-
+import classes as cl #FIX: find a commmon import
 
 try:
     import Tkinter as tk
@@ -23,7 +23,8 @@ except ImportError: # py3k
 # - menu bar (over hframe if possible)
 # - update() function to auto-change today() when app is running
 # - scrolling bar
-
+# - try to use Date_widget Class just if in the Hotel App.
+#   in the Standalone Calendar object use tk.Label (Stefano)
 
 
 
@@ -40,11 +41,18 @@ def get_calendar(locale, fwday):
 #italiano = 'it_IT.utf8'   #locale of italiano 
 
 
-
+class Date_widget(tk.Label):# a Label class extended 
+    def __init__(self, master=None, **kw):
+        tk.Label.__init__(self,master,**kw)
+        self._date=None # a date is bound to every day-label of calendar
+        
+        
 class Calendar(tk.Frame):
     # TODO: use selectforeground and background to get all tidy
-
-    datetime = calendar.datetime.datetime
+    #! - changed calendar.datetime.datetime to calendar.datetime.date
+    #    and now() to today() due to compatibility with Day class
+    
+    datetime = calendar.datetime.date
     timedelta = calendar.datetime.timedelta
 
     def __init__(self, master=None, **kw):
@@ -56,21 +64,22 @@ class Calendar(tk.Frame):
         #!!!
 
         
-        ## Remove custom options from kw
-        ## before initializating ttk.Frame
+        # remove custom options from kw
+        # before initializating ttk.Frame
         fwday = kw.pop('firstweekday', calendar.MONDAY)
-        year = kw.pop('year', self.datetime.now().year)
-        month = kw.pop('month', self.datetime.now().month)
-        today = kw.pop('today', self.datetime.now().day)
+        year = kw.pop('year', self.datetime.today().year)
+        month = kw.pop('month', self.datetime.today().month)
+        today = kw.pop('today', self.datetime.today().day)
         locale = kw.pop('locale', None)
         sel_bg = kw.pop('selectbackground', '#ecffc4')
         sel_fg = kw.pop('selectforeground', '#05640e')
 
         # Interesting how they are assigned
         # (Calendar_widget does not inherit from datetime or calendar)
-        self._today = self.datetime(year,month,today) # today
+        self._today = self.datetime(year,month,today) # added by me
         self._date = self.datetime(year, month, 1) # first of month
         self._selection = None # no date selected
+        print(type(self._today),type(self._date))
         
         tk.Frame.__init__(self, master, **kw) # inheritance
 
@@ -78,10 +87,11 @@ class Calendar(tk.Frame):
         self.w_list=[] # labels with days of weekdays
         self.dates_ls=[] # grid of dates month
         self._place_widgets() # pack or grid widgets
-        self._conf_calendar() # setup  things (not implemented yet)
+        self._conf_calendar() # setup colors, size etc.. (dont know)
         self._build_calendar() # insert data in the month calendar
+
         
-    ## Special methods
+    # special methods
     def __setitem__(self, item, value):
         pass
 
@@ -90,18 +100,15 @@ class Calendar(tk.Frame):
 
     def _conf_calendar(self):
         pass
-
     
     def _place_widgets(self):
-        # a font used (to do in a self.config method)
         myfont=tkFont.Font(family='Helvetica',
                                   size=10,
                                  weight=tkFont.BOLD)
         
-       
+        #! FIX: header size bases on longest month
         
-        ## Place and size of the frames in Calendar
-        ## insert this part after for better comprehension
+        # place and size of the frames in Calendar
         self.columnconfigure(0,weight=1) #fill X
         self.grid_rowconfigure(0,weight=0) #hframe row position
         self.rowconfigure(1,weight=0) #wframe row position
@@ -109,18 +116,18 @@ class Calendar(tk.Frame):
         
         # header frame and its widgets
         hframe = tk.Frame(self,
-                          bg='#DEE1DB') # buttons and header (on top)
+                          bg='#DEE1DB') # buttons and header(month,year)
 
         
-        lbtn = tk.Button(hframe, text='<', #change month button
+        lbtn = tk.Button(hframe, text='<',
                           bg='white',
-                         highlightthickness=2, #border 
-                         highlightbackground='#F6E8FF',#border color
+                         highlightthickness=2,
+                         highlightbackground='#F6E8FF',
                           command=self._prev_month) # prev month
         lbtn.config(font=myfont)
 
         
-        rbtn = tk.Button(hframe, text='>', #change month button
+        rbtn = tk.Button(hframe, text='>',
                          bg='white',
                          highlightthickness=2,
                          highlightbackground='#F6E8FF',
@@ -133,7 +140,6 @@ class Calendar(tk.Frame):
                                  anchor='center') # header
         self._header.config(font=myfont)
 
-        
         # the calendar (changed from Treeview object)
         # now two frames: day-names (fixed size, or nearly)
         #                 dates (size grows with the object)
@@ -142,13 +148,12 @@ class Calendar(tk.Frame):
         cframe = tk.Frame(self) # dates frame
 
 
-        
-        ## Pack/grid frames and widgets
+        # Pack/grid frames and widgets
 
         #hframe and its widgets
         hframe.grid(row=0,
                     column = 0,sticky='we',
-                    ipadx=2,ipady=2) 
+                    ipadx=2,ipady=2) # check for stickiness
         
         
         
@@ -172,7 +177,7 @@ class Calendar(tk.Frame):
                     column=0,
                     sticky='we',
                     ipady=5)  
-        #inserting names
+        # inserting names
         names = self._cal.formatweekheader(3).split()
         for i, name in enumerate(names):
             self.w_list.append(tk.Label(wframe,
@@ -192,11 +197,11 @@ class Calendar(tk.Frame):
         # grid of 6x7 labels for future filling
         for week in range(6): #over max number of weeks
             cframe.rowconfigure(week,
-                                 weight=1) # weighting rows
+                                weight=1) # weighting rows
             for day in range(7): #over 7 days of weeks
                 cframe.columnconfigure(day,
                                         weight=1)# weighting cols
-                self.dates_ls.append(tk.Label(cframe,
+                self.dates_ls.append(Date_widget(cframe,
                                                text='',
                                           highlightthickness=1,
                                           highlightbackground='#EEEEEC',
@@ -221,8 +226,9 @@ class Calendar(tk.Frame):
         ndays = calendar.monthrange(year,month)[1] #days in the month
         
         for i,date in enumerate(self.dates_ls):
-            shift=i-fday #back to the monday of the first week, then on
-            day=self._date + self.timedelta(days=shift) 
+            shift=i-fday
+            day=self._date + self.timedelta(days=shift)
+            date._date = day
             date['text']=str(day.day)
             date['fg'] = 'black' if shift in range(ndays) else '#D3D7CF'
             date['bg'] = '#F6E8FF' if day==self._today else 'white'
@@ -231,7 +237,7 @@ class Calendar(tk.Frame):
     def _prev_month(self):
         self._date = self._date - self.timedelta(days=1)
         self._date = self.datetime(self._date.year, self._date.month, 1)
-        self._build_calendar() # reconstruct calendar
+        self._build_calendar() # reconstuct calendar
 
 
     def _next_month(self):
@@ -243,6 +249,88 @@ class Calendar(tk.Frame):
 
 
 
+# A Calendar class with dates that are linked to app-specific stuff
+class App_cal(Calendar):
+    def __init__(self, master=None, **kw):
+        Calendar.__init__(self, master,**kw)
+        self._bind_labels() #binds events to all dates labels
+        self._bg_var=None #bg of widgets stored for mouse focus events
+        self._ls = cl.List() #list object of Day, Room, Reservation
+        self._toggle=False # a toggle
+
+        
+    def _bind_labels(self):    
+        for date in self.dates_ls:
+            date.bind("<Button-1>", self._callback)
+            date.bind("<Enter>", self._mouse_on)
+            date.bind("<Leave>",self._mouse_off)
+            date.bind("<Button-3>",self._popup)
+            
+    def show_free(self,day):#shows free rooms of day 'day'
+        for date in self._ls._day:
+            if date == day: 
+                print(date.free)
+                break
+
+
+    
+    #CALLBACKS
+    def _mouse_on(self,event):
+        self._bg_var=event.widget['bg'] #saves bg before entering
+        event.widget.config(bg='#D3D7CF')
+        
+        
+    def _mouse_off(self,event):
+        event.widget.config(bg=self._bg_var)#sets bg as before 
+
+        
+    def _callback(self,event):# too complex. try to get it simpler
+        day = event.widget._date #day in datetime.date format
+        self.show_free(day)
+
+    def _popup(self,event):
+        #if self._toggle: # already a popup in there
+        popup = tk.Label(self, text='Ciao',bg='green')
+        date_pos = (event.widget.winfo_rootx(),
+                    event.widget.winfo_rooty())  
+        date_size = (event.widget.winfo_width(),
+                     event.widget.winfo_height())
+        x=date_pos[0]# + date_size[0]/2
+        y=date_pos[1]#+date_size[1]/2
+        print(x,y) 
+        popup.place(x=x,y=y)
+
+class popup(tk.Label):
+    pass
+
+root = tk.Tk()
+
+#root.attributes('-alpha',0.0)  #attempt to preload 
+#root.withdraw()                # ''     ''   ''
+#root.after(2000,root.deiconify)# ''     ''   ''
+
+root.rowconfigure(0, #row of calendar in master
+                  minsize=200,#minsize of calendar height
+                  weight=1)#root-row streches with window
+root.columnconfigure(0, #col of calendar in master
+                     minsize=200, #minsize of the calendar
+                     weight=1)#root-col streches with window
+
+root.minsize(width=200,height=0) #minsize of window
+
+
+tkcal = App_cal(root,
+                  width=300, #starting width
+                  height=350)#starting height
+
+tkcal.grid(row=0,column=0,sticky='news')#sticked with root
+tkcal.grid_propagate(False) #prevent ttkcal initial propagation
+
+
+
+#root.after(0, root.attributes, "-alpha", 1.0) # attempt to preload
+#root.after(2000,root.deiconify)               #    ''   ''    ''
+root.mainloop()
             
             
 
