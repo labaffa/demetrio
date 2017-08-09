@@ -1,6 +1,5 @@
 import calendar
 import datetime
-import ttk
 from time import sleep
 import classes as cl #FIX: find a commmon import
 
