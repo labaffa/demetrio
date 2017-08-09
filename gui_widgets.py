@@ -303,36 +303,6 @@ class App_cal(Calendar):
 class popup(tk.Label):
     pass
 
-root = tk.Tk()
-
-#root.attributes('-alpha',0.0)  #attempt to preload 
-#root.withdraw()                # ''     ''   ''
-#root.after(2000,root.deiconify)# ''     ''   ''
-
-root.rowconfigure(0, #row of calendar in master
-                  minsize=200,#minsize of calendar height
-                  weight=1)#root-row streches with window
-root.columnconfigure(0, #col of calendar in master
-                     minsize=200, #minsize of the calendar
-                     weight=1)#root-col streches with window
-
-root.minsize(width=200,height=0) #minsize of window
-
-
-tkcal = App_cal(root,
-                  width=300, #starting width
-                  height=350)#starting height
-
-tkcal.grid(row=0,column=0,sticky='news')#sticked with root
-tkcal.grid_propagate(False) #prevent ttkcal initial propagation
-
-
-
-#root.after(0, root.attributes, "-alpha", 1.0) # attempt to preload
-#root.after(2000,root.deiconify)               #    ''   ''    ''
-root.mainloop()
-            
-            
 
         
         
