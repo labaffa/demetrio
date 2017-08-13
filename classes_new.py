@@ -5,25 +5,30 @@ from surnames import surnames # a list of surnames
 from datetime import datetime, date, timedelta
 import random 
 
-# 1) Added number of reservations to create in boookingGenerator
 
 class Room:
     def __init__(self, room_name):
         self.name = room_name
         self.no_beds = rooms[room_name]
 
-    def isAvailable(self, data_source):
-        try:
-            with open(data_source) as f:
-                data = DataHolder(data_souce)
-                bookings = data.data
-                for booking in bookings:
-                    pass
-                        
-                    
-        except:
-            print('Data source you\'ve given is empty!')
-
+    # - Returns True if 'self' is free during
+    #   the whole interval 'last_day - first_day' (i.e. is bookable)
+    def isAvailable(self, data_source,
+                    first_day, last_day = None):
+        # data_source must be a DataHolder object
+        bookings = data_source.data
+        if not last_day:
+            last_day = first_day  
+        for booking in bookings:
+            if ((first_day < booking.checkout) and
+                (last_day >= booking.checkin)):# overlap
+                if (self.name == booking.room.name):
+                    print('Room \'' + str(self.name) +
+                          '\' is not available.')
+                    return False
+        return True
+        
+            
 class DataHolder:
     def __init__(self, data_source):
         self.source = data_source 
@@ -36,7 +41,7 @@ class DataHolder:
                     self.data.append(Reservation(*values))
             f.close()
         # if 'data_source' does not exist bookingGenerator is called
-        except: 
+        except IOError: 
             print('\'Reservation file\' you have chosen does not exist.'
                   + '\nGoing to create one with a random reservation!')
             self.bookingGenerator()
@@ -46,19 +51,11 @@ class DataHolder:
     #   and max nights number 'max_no_nights'.
     # - Appends it to 'self.source' containing other reservations.
     #   'data_file' is created if it does not exist.
-    # - Returns the last Reservation object appended
+
     
     def bookingGenerator(self,
                          interval = 200, max_no_nights = 15, n = 1):
         for i in range(n):
-            try: # sets the sequential 'reservationId'
-                with open(self.source) as f:
-                    last_id_used = len(f.readlines()) 
-                    reservation_id = last_id_used + 1
-                f.close()
-            except: # if data_file does not exist
-                reservation_id = 1
-
             room = random.choice(rooms.keys()) #draw of room
             # draws of checkin and checkout
             rand_cin = random.randint(0, interval)
@@ -67,6 +64,15 @@ class DataHolder:
             checkout_date = checkin_date + timedelta(no_days)
             checkin = checkin_date.strftime('%Y-%m-%d')
             checkout = checkout_date.strftime('%Y-%m-%d')
+            if self.data and not Room(room).isAvailable(self,
+                                                        checkin_date,
+                                                        checkout_date):
+                print(room, checkin, checkout) 
+                print('Reservation not possible, sorry.')
+                continue
+            # reservation_id substitued with this.
+            reservation_id = ((int(self.data[-1].id) + 1)
+                              if self.data else 1)
             # draws of customer's name and surname
             name = random.choice(names)
             surname = random.choice(surnames)
@@ -88,8 +94,8 @@ class DataHolder:
                         checkin + '  ' +
                         checkout + '\n')
             f.close()
-
-        return Reservation(*booking)
+            self.data.append(Reservation(*booking))
+        
 
 
             
@@ -104,5 +110,5 @@ class Reservation:
 
 
 
-a = DataHolder('test1.dat')
+a = DataHolder('test3.dat')
 b = a.bookingGenerator()
