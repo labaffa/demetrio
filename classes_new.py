@@ -18,10 +18,10 @@ class Room:
         # data_source must be a DataHolder object
         bookings = data_source.data
         if not last_day:
-            last_day = first_day + timedelta(1) 
+            last_day = first_day + timedelta(1)  
         for booking in bookings:
             if ((first_day < booking.checkout) and
-                (last_day > booking.checkin)):# overlap
+                (last_day >= booking.checkin)):# overlap
                 if (self.name == booking.room.name):
                     print('Room \'' + str(self.name) +
                           '\' is not available.')
@@ -33,6 +33,7 @@ class DataHolder:
     def __init__(self, data_source):
         self.source = data_source 
         self.data = []
+        self.busy_days = {}
         try:
             with open(self.source) as f:
                 lines_list = f.read().splitlines()
@@ -44,7 +45,27 @@ class DataHolder:
         except IOError: 
             print('\'Reservation file\' you have chosen does not exist.'
                   + '\nGoing to create one with a random reservation!')
-            self.bookingGenerator()
+            self.bookingGenerator(n=1000)
+            
+        # Populate the busy_days dictionary
+        if len(self.data) > 0:
+            dates = list(self.busy_days.keys())
+            # Loop over reservations
+            for reservation in self.data:
+                date = reservation.checkin
+                if date not in dates:
+                    self.busy_days[date] = [reservation.room.name]
+                    dates.append(date)
+                else:
+                    self.busy_days[date].append(reservation.room.name)
+                # Loop over days of a single reservation
+                for j in range(1, reservation.no_days.days + 1):
+                    next_date = date + timedelta(j)
+                    if next_date not in dates:
+                        self.busy_days[next_date] = [reservation.room.name]
+                        dates.append(next_date)
+                    else:
+                        self.busy_days[next_date].append(reservation.room.name)
 
     # - Creates n (default=1) Reservation objects with checkin
     #   in a range of 'interval' days from 'today' day onward
@@ -52,11 +73,10 @@ class DataHolder:
     # - Appends it to 'self.source' containing other reservations.
     #   'data_file' is created if it does not exist.
 
-    
-    def bookingGenerator(self,
-                         interval = 200, max_no_nights = 15, n = 1):
+    def bookingGenerator(self, interval=200, max_no_nights=15, n=1):
         for i in range(n):
-            room = random.choice(rooms.keys()) #draw of room
+            room_ids = list(rooms.keys())
+            room = random.choice(room_ids) #draw of room
             # draws of checkin and checkout
             rand_cin = random.randint(0, interval)
             no_days = random.randint(1, max_no_nights)
@@ -71,8 +91,8 @@ class DataHolder:
                 print('Reservation not possible, sorry.')
                 continue
             # reservation_id substitued with this.
-            reservation_id = ((int(self.data[-1].id) + 1)
-                              if self.data else 1)
+            reservation_id = int(self.data[-1].id) + 1 if self.data else 1
+
             # draws of customer's name and surname
             name = random.choice(names)
             surname = random.choice(surnames)
@@ -95,9 +115,14 @@ class DataHolder:
                         checkout + '\n')
             f.close()
             self.data.append(Reservation(*booking))
-        
-
-
+            
+    def get_availability_for_room(self, room_name, start_day, end_day): 
+        available_days = list() 
+        for day, list_of_busy_rooms in self.busy_days.items():
+            if start_day <= day <= end_day:
+                if room_name not in list_of_busy_rooms:
+                    available_days.append(datetime.strftime(day, '%Y-%m-%d'))
+        print(available_days)
             
 class Reservation:
     def __init__(self, reservation_id, room_name,
@@ -105,10 +130,11 @@ class Reservation:
         self.id = reservation_id
         self.room = Room(room_name)
         self.customer = customer_name
-        self.checkin = datetime.strptime(checkin,'%Y-%m-%d').date()
-        self.checkout = datetime.strptime(checkout,'%Y-%m-%d').date()
+        self.checkin = datetime.strptime(checkin, '%Y-%m-%d').date()
+        self.checkout = datetime.strptime(checkout, '%Y-%m-%d').date()
+        self.no_days = self.checkout - self.checkin # timedelta object
 
 
-
-a = DataHolder('test3.dat')
-b = a.bookingGenerator()
+        
+# a = DataHolder('test3.dat')
+# b = a.bookingGenerator()
