@@ -18,10 +18,10 @@ class Room:
         # data_source must be a DataHolder object
         bookings = data_source.data
         if not last_day:
-            last_day = first_day  
+            last_day = first_day + timedelta(1) 
         for booking in bookings:
             if ((first_day < booking.checkout) and
-                (last_day >= booking.checkin)):# overlap
+                (last_day > booking.checkin)):# overlap
                 if (self.name == booking.room.name):
                     print('Room \'' + str(self.name) +
                           '\' is not available.')
