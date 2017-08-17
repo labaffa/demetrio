@@ -1,6 +1,6 @@
  # Copy this as a DataHolder method. Returns a dict of room names as keys and 
  # lists of dates ranges where room is available
- 
+ ## Fix: indentation shifted by 4
     def getAvailabilityforRooms(self, first_day, last_day = None,
                                 room_name = None):
         bookings = self.data #list of Reservation
