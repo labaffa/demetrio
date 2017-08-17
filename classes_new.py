@@ -122,8 +122,16 @@ class DataHolder:
             if start_day <= day <= end_day:
                 if room_name not in list_of_busy_rooms:
                     available_days.append(datetime.strftime(day, '%Y-%m-%d'))
+        # day is now at the last busy day
+        if start_day > day:
+            # The whole period is available!
+            from_day = datetime.strftime(start_day, '%Y-%m-%d')
+            to_day = datetime.strftime(end_day, '%Y-%m-%d')
+            available_days.append(from_day+' - '+to_day)
+
         print(available_days)
-            
+
+
 class Reservation:
     def __init__(self, reservation_id, room_name,
                  customer_name, checkin, checkout, **kw):
