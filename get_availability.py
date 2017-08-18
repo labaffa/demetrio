@@ -33,11 +33,11 @@
                               (interval[1] <= test_interval[1]))
                     case_b = ((interval[0] < test_interval[0]) and
                               (interval[1] > test_interval[1]))
-                    case_c = ((interval[0] > test_interval[0]) and
+                    case_c = ((interval[0] >= test_interval[0]) and
                               (interval[1] > test_interval[1]))
                     case_d = ((interval[0] < test_interval[0]) and
-                              (interval[1] < test_interval[1]))
-
+                              (interval[1] <= test_interval[1]))
+                   
                     if case_b:
                         interval_1 = (interval[0], test_interval[0])
                         interval_2 = (test_interval[1], interval[1])
