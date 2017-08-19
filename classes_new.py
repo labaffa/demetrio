@@ -5,29 +5,34 @@ from surnames import surnames # a list of surnames
 from datetime import datetime, date, timedelta
 import random 
 
+# Evaluates if two couple of checkin-checkout overlap
+def isDaysOverlap(start, end, test_start, test_end):
+    # Controls
+    if (end <= start) or (test_end <= test_start):
+        raise ValueError('End of range must be greater than its start')
+    # Condition of overlap. Endpoints are checkins and checkouts,
+    # so '=' are removed.
+    if ((start < test_end) and
+        (end > test_start)):
+        return True
+    else:
+        return False
 
+# Return a string with the same content of 'customer_name', 
+# first capital letter and single spacing separation.
+def customer_field_formatter(customer_name):
+    # Capitalizing just first letter in words (Fix: names as McGregor)
+    capital_customer = customer_name.title()
+    # Removing unusual spacing (as '   ') between words 
+    customer_name =' '.join(word for word in capital_customer.split())
+    return customer_name
+    
+    
 class Room:
     def __init__(self, room_name):
         self.name = room_name
         self.no_beds = rooms[room_name]
 
-    # - Returns True if 'self' is free during
-    #   the whole interval 'last_day - first_day' (i.e. is bookable)
-    def isAvailable(self, data_source,
-                    first_day, last_day = None):
-        # data_source must be a DataHolder object
-        bookings = data_source.data
-        if not last_day:
-            last_day = first_day + timedelta(1)  
-        for booking in bookings:
-            if ((first_day < booking.checkout) and
-                (last_day >= booking.checkin)):# overlap
-                if (self.name == booking.room.name):
-                    print('Room \'' + str(self.name) +
-                          '\' is not available.')
-                    return False
-        return True
-        
             
 class DataHolder:
     def __init__(self, data_source):
@@ -67,6 +72,75 @@ class DataHolder:
                     else:
                         self.busy_days[next_date].append(reservation.room.name)
 
+    # - Returns True if Room with 'room_name' is free during
+    #   the whole interval 'last_day - first_day' (i.e. is bookable)
+    #   and False if not
+    def isAvailable(self, room_name, first_day, last_day = None):
+        # Controls
+        if not isinstance(room_name, str):
+            raise TypeError('isAvailable() arg 1 must be a string')
+        if room_name not in rooms.keys():
+            raise ValueError('Room you inserted does not exist.')
+        if (not isinstance(first_day, date) or not
+            isinstance(last_day, date)):
+            raise TypeError('datetime.date objects are required.')
+        if last_day and last_day <= first_day:
+            raise ValueError('Second day must be greater than first')
+        # Setting variables
+        bookings = self.data
+        if not last_day:
+            last_day = first_day + timedelta(1) # default = 1 night
+        # Scanning  reservations
+        for booking in bookings:
+            test_start = booking.checkin
+            test_end = booking.checkout
+            test_room = booking.room.name
+        # Checking for availability
+            if (isDaysOverlap(first_day, last_day,
+                              test_start, test_end) and
+                (room_name == test_room)): #overlap found->not bookable 
+                return False
+        return True
+                        
+
+      def addBooking_as_text(self, room_name, customer,
+                           checkin, nights_or_checkout = None, **kw):
+        if not nights_or_checkout:# default = 1 night
+            nights_or_checkout = 1
+        # Creating checkin date object
+        checkin_date = datetime.strptime(checkin, '%Y-%m-%d').date()
+        # Creating checkout_date and string field if not given
+        if isinstance(nights_or_checkout, int):
+            no_nights = nights_or_checkout 
+            checkout_date = checkin_date + timedelta(no_nights)
+            checkout = checkout_date.strftime('%Y-%m-%d')
+        else:# checkout string given
+            checkout_date = datetime.strptime(nights_or_checkout,
+                                              '%Y-%m-%d').date()
+        # Checking if room is available
+        if self.data and not self.isAvailable(room_name,
+                                              checkin_date,
+                                              checkout_date):
+            msg =  (room_name + ' is not bookable in ' +
+                    rangeFormat(checkin_date, checkout_date))
+            print(msg)
+            return False      
+        # Formatting customer name
+        customer = customer_field_formatter(customer)
+        # Setting sequential id 
+        last_used_id = int(self.data[-1].id) if self.data else 0
+        reservation_id = last_used_id + 1
+        # Creating and appending Reservation 
+        new_reservation = Reservation(reservation_id, room_name,
+                                      customer, checkin, checkout)
+        with open(self.source, 'a') as f: 
+            line = (str(reservation_id) + '  ' + room_name + '  ' +
+                    customer + '  ' + checkin + '  ' + checkout + '\n')
+            f.write(line)
+        f.close()
+        self.data.append(new_reservation)
+        return new_reservation
+                        
     # - Creates n (default=1) Reservation objects with checkin
     #   in a range of 'interval' days from 'today' day onward
     #   and max nights number 'max_no_nights'.
@@ -84,15 +158,13 @@ class DataHolder:
             checkout_date = checkin_date + timedelta(no_days)
             checkin = checkin_date.strftime('%Y-%m-%d')
             checkout = checkout_date.strftime('%Y-%m-%d')
-            if self.data and not Room(room).isAvailable(self,
-                                                        checkin_date,
-                                                        checkout_date):
-                print(room, checkin, checkout) 
-                print('Reservation not possible, sorry.')
+            if self.data and not self.isAvailable(room,
+                                                  checkin_date,
+                                                  checkout_date):
                 continue
             # reservation_id substitued with this.
-            reservation_id = int(self.data[-1].id) + 1 if self.data else 1
-
+            last_used_id = int(self.data[-1].id) if self.data else 0
+            reservation_id = last_used_id + 1
             # draws of customer's name and surname
             name = random.choice(names)
             surname = random.choice(surnames)
