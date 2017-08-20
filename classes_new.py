@@ -159,6 +159,5 @@ class Reservation:
         self.no_nights = self.checkout - self.checkin # a timedelta object
 
 
-        
 # a = DataHolder('test3.dat')
 # b = a.bookingGenerator()
