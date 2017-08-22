@@ -1,5 +1,30 @@
 from datetime import timedelta
-from settings.constants import DATE_FMT
+from settings.constants import DATE_FMT, reservation_template
+from collections import OrderedDict
+
+
+def set_reservation_template(*args):
+    reservation = OrderedDict()
+    for key, value in zip(reservation_template.keys(), args):
+        reservation[key] = value
+    return reservation
+
+
+def format_reservation_line(reservation):
+    reservation_line = str()
+    for value in reservation.values():
+        reservation_line += str(value)
+        reservation_line += '\t'
+    reservation_line += '\n'
+    return reservation_line
+
+    
+def customer_field_formatter(customer_name):
+    # Capitalizing just first letter in words (Fix: names as McGregor)
+    capital_customer = customer_name.title()
+    # Removing unusual spacing (as '   ') between words 
+    formatted_name =' '.join(word for word in capital_customer.split())
+    return formatted_name
 
 
 def format_date_range(start, end):
