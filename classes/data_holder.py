@@ -1,32 +1,12 @@
-from datetime import datetime, date, timedelta
-import random
+from datetime import datetime, timedelta
 
-from settings.constants import rooms, DATE_FMT
-from settings.names import names # a list of names
-from settings.surnames import surnames # a list of surnames 
-from utils.formatters import customer_field_formatter, format_date_range, date_or_date_range, \
-    set_reservation_template, format_reservation_line
-from utils.generators import date_range
+from settings.constants import DATE_FMT
 from utils.checkers import is_room_available
+from utils.formatters import format_date_range, customer_field_formatter, date_or_date_range, set_reservation_template
+from utils.generators import date_range, generate_reservations
+from classes.demetrio_classes import Reservation
 
 
-class Room:
-    def __init__(self, room_name):
-        self.name = room_name
-        self.no_beds = rooms[room_name]
-        # TODO Add optional fields
-
-        
-class Reservation:
-    def __init__(self, reservation_id, room_name, name, surname, checkin, checkout, *args):
-        self.id = reservation_id
-        self.room = Room(room_name)
-        self.customer = name + ' ' + surname
-        self.checkin = datetime.strptime(checkin, DATE_FMT).date()
-        self.checkout = datetime.strptime(checkout, DATE_FMT).date()
-        self.no_nights = self.checkout - self.checkin # a timedelta object
-        
-           
 class DataHolder:
     def __init__(self, data_source):
         self.source = data_source 
@@ -39,21 +19,26 @@ class DataHolder:
             with open(self.source) as f:
                 lines_list = f.read().splitlines()
                 for line in lines_list:
-                    values = line.split('\t') 
-                    values.remove('') 
-                    data.append(Reservation(*values))
+                    values = line.split('\t')
+                    # The last element is a blank space, see format_reservation_line in utils.formatters
+                    blank_space = values.pop(-1)
+                    if not blank_space:
+                        reservation_data = set_reservation_template(values)
+                        data.append(Reservation(reservation_data))
+                    else:
+                        raise Exception('Check your data file, something is wrong')
             f.close()
         # if 'data_source' does not exist create them
         except IOError: 
             print('\'Reservation file\' you have chosen does not exist.'
                   + '\nGoing to create one with a random reservation!')
-            data = self.generate_reservations(n=1000)
+            data = generate_reservations(self.source, n=1000)
             
         return data
         
     def busy_days_builder(self, reservation_data):
+        # Populate the busy_days dictionary
         busy_days = {}
-    # Populate the busy_days dictionary
         if len(reservation_data) > 0:
             dates = list(busy_days.keys())
             # Loop over reservations
@@ -125,54 +110,6 @@ class DataHolder:
                 self.busy_days[night].append(room_name)
         return
     
-    def generate_reservations(self, interval=200, max_no_nights=15, n=1):
-        """ Creates n (default=1) Reservation objects with checkin
-            in a range of 'interval' days from 'today' day onward
-            and max nights number 'max_no_nights'.
-            Appends it to 'self.source' containing other reservations.
-            'data_file' is created if it does not exist.
-        """
-        reservations = list() 
-        for _ in range(n):
-            room = random.choice(list(rooms.keys())) #draw of room
-            # draws of checkin and checkout
-            rand_cin = random.randint(0, interval)
-            no_days = random.randint(1, max_no_nights)
-            checkin_date = date.today() + timedelta(rand_cin)
-            checkout_date = checkin_date + timedelta(no_days)
-            checkin = checkin_date.strftime(DATE_FMT)
-            checkout = checkout_date.strftime(DATE_FMT)
-            
-            try:
-                if self.data:
-                    room_is_available = is_room_available(self.data, room, checkin_date, checkout_date)
-                    last_used_id = int(self.data[-1].id)
-                    if not room_is_available:
-                        continue
-            except AttributeError:
-                last_used_id = 0
-
-            reservation_id = last_used_id + 1
-            # draws of customer's name and surname
-            name = random.choice(names)
-            surname = random.choice(surnames)
-            # optional fields (add date of creation and more optional fields)
-            pax = random.randint(1, 5)
-            parking = random.choice([True, False]) # fix: part of staying time
-            booking_type = random.choice(['Booking', 'Email', 'Phone'])
-            breakfast = random.choice(['No', 'Ticket', 'Room'])
-            
-            booking = set_reservation_template(reservation_id, 
-                                               room, name, surname, checkin, checkout, pax, parking, booking_type, breakfast)
-            with open(self.source, 'a') as f:
-                f.writelines(format_reservation_line(booking))
-            f.close()
-
-            reservations.append(Reservation(*booking.values()))
-
-        return reservations
-    
-    
     def get_availability_for_room(self, room_name, start_day, end_day, return_day_obj=False): 
         available_days = list() 
         for day, list_of_busy_rooms in self.busy_days.items():
@@ -190,3 +127,4 @@ class DataHolder:
             return date_or_date_range(sorted(available_days))
         else:
             return sorted(available_days)
+    

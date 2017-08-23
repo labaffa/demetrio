@@ -3,13 +3,22 @@ from settings.constants import DATE_FMT, reservation_template
 from collections import OrderedDict
 
 
-def set_reservation_template(*args):
+def set_reservation_template(*reservation_data):
     reservation = OrderedDict()
-    for key, value in zip(reservation_template.keys(), args):
-        reservation[key] = value
-    return reservation
+    res_data = reservation_data[0]
+    if isinstance(res_data, OrderedDict):
+        for key, value in reservation_template.items():
+            if key in res_data and res_data[key]:
+                reservation[key] = res_data[key]
+            else:
+                reservation[key] = value
+        return reservation
+    else:
+        for key, value in zip(reservation_template.keys(), res_data):
+            reservation[key] = value
+        return reservation
 
-
+ 
 def format_reservation_line(reservation):
     reservation_line = str()
     for value in reservation.values():
