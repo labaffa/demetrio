@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from settings.constants import DATE_FMT
+from settings.constants import rooms, DATE_FMT
 from utils.checkers import is_room_available
 from utils.formatters import format_date_range, customer_field_formatter, date_or_date_range, set_reservation_template
 from utils.generators import date_range, generate_reservations
@@ -127,4 +127,12 @@ class DataHolder:
             return date_or_date_range(sorted(available_days))
         else:
             return sorted(available_days)
-    
+
+    def get_availability(self, start_day, end_day, pax=0, return_day_obj=False):
+        for room_name in rooms.keys():
+            if pax:
+                if pax > rooms[room_name]:
+                    continue
+            available_days = self.get_availability_for_room(room_name, start_day, end_day, return_day_obj=return_day_obj)
+            print('Room %s is available on:' % room_name)
+            print(available_days)
