@@ -7,8 +7,9 @@ optional_fields = ['Pax', 'Parking', 'BookingType', 'Breakfast']
 all_fields = ['ReservationId'] + mandatory_fields + optional_fields
 
 
+
 # In utils.formatters
-def complete_reservation_fields(incomplete_reservation): 
+def complete_reservation_dict(incomplete_reservation_dict): 
     '''
        Given a dictionary of variable number of reservation fields, 
        return the same dict but, if any of 'all_reservation_fields' 
@@ -17,9 +18,9 @@ def complete_reservation_fields(incomplete_reservation):
     reservation = {}
     # Adding fields present in 'all_fields' and not given
     for field in all_fields:
-        if field in incomplete_reservation.keys():
-            reservation[field] = incomplete_reservation[field]
-        else:
+        try:
+            reservation[field] = incomplete_reservation_dict[field]
+        except KeyError:
             reservation[field] = ''
     return reservation
 
@@ -96,7 +97,7 @@ def generate_reservations(data_file, interval=200, max_no_nights=15, n=1):
             reservation_data['BookingType'] = random.choice(['Booking', 'Email', 'Phone'])
             reservation_data['Breakfast'] = random.choice(['No', 'Ticket', 'Room'])
 
-            booking = complete_reservation_fields(reservation_data)
+            booking = complete_reservation_dict(reservation_data)
             reservations.append(Reservation(booking))
             booking_line = string_from_reservation(booking)
             f.write(booking_line)
@@ -169,7 +170,7 @@ def add_booking_as_text(self, *args, **kw):
     reservation_id = last_used_id + 1
     reservation['ReservationId'] = reservation_id
     # Creating a complete reservation dictionary
-    new_reservation = complete_reservation_fields(reservation)
+    new_reservation = complete_reservation_dict(reservation)
     # Appending a fields' values textline to 'self.source'
     with open(self.source, 'a') as f:
         new_reservation_line = string_from_reservation(new_reservation)
