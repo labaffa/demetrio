@@ -45,8 +45,8 @@ def complete_reservation_dict(incomplete_reservation_dict):
 # In utils.formatters
 def string_from_reservation(reservation_dict):
     '''
-       Given a reservation dict, return a string of all 
-       reservation values ('\t' split).
+    Given a reservation dict, return a string of all 
+    reservation values ('\t' split).
     '''
     reservation_line = str()
     last_field_index = len(all_fields) - 1
@@ -62,11 +62,11 @@ def string_from_reservation(reservation_dict):
 # In utils.formatters
 def reservation_dict_from_textline(reservation_line):
     '''
-       Return a reservation dict by taking field values from
-       'reservation_line' words.
-       If 'reservation_line' is hand-written, pay attention
-       that values respect order given in 'all_reservation_fields', 
-       to avoid mismatches. 
+    Return a reservation dict by taking field values from
+    'reservation_line' words.
+    If 'reservation_line' is hand-written, pay attention
+    that values respect order given in 'all_reservation_fields', 
+    to avoid mismatches. 
     '''
     reservation = {}
     reservation_values = reservation_line.split('\t')
@@ -101,7 +101,6 @@ def generate_reservations(data_file, interval=200, max_no_nights=15, n=1):
             reservation_id += 1
 
             reservation_data = {}
-            reservation_data['ReservationId'] = reservation_id
             reservation_data['RoomId'] = room_name
             # draws of customer's name and surname
             reservation_data['Name'] = random.choice(names)
@@ -115,6 +114,10 @@ def generate_reservations(data_file, interval=200, max_no_nights=15, n=1):
             reservation_data['Breakfast'] = random.choice(['No', 'Ticket', 'Room'])
 
             booking = complete_reservation_dict(reservation_data)
+            # 'ReservtionId' is always assigned after
+            # validation and creation of the reservation dict
+            # (i.e. after complete_reservation_dict())
+            booking['ReservationId'] = reservation_id
             reservations.append(Reservation(booking))
             booking_line = string_from_reservation(booking)
             f.write(booking_line)
