@@ -11,17 +11,34 @@ all_fields = ['ReservationId'] + mandatory_fields + optional_fields
 # In utils.formatters
 def complete_reservation_dict(incomplete_reservation_dict): 
     '''
-       Given a dictionary of variable number of reservation fields, 
-       return the same dict but, if any of 'all_reservation_fields' 
-       field is missing it will be added with an empty string value. 
+    Given a dictionary of variable number of reservation fields, 
+    return the same dict but, if any of 'optional_fields' 
+    field is missing it will be added with an empty string value.
+    Errores raised if mandatories missing or mispelled inserted
     '''
     reservation = {}
-    # Adding fields present in 'all_fields' and not given
-    for field in all_fields:
+    # Inserting mandatory fields
+    for field in mandatory_fields:
         try:
             reservation[field] = incomplete_reservation_dict[field]
+            del incomplete_reservation_dict[field]
+        except KeyError:
+            msg = ('Field \'' + str(field) + '\' is mandatory.' +
+                   'Right spellings are: ' + str(mandatory_fields))
+            raise KeyError(msg)
+    # Inserting optional fields
+    for field in optional_fields:
+        try:
+            reservation[field] = incomplete_reservation_dict[field]
+            del incomplete_reservation_dict[field]
         except KeyError:
             reservation[field] = ''
+    # Checking if mispelled or not allowed given.
+    if incomplete_reservation_dict:
+        allowed_fields = mandatory_fields + optional_fields
+        msg = ('Wrong fields inserted. Allowed fields are: ' +
+               str(allowed_fields))
+        raise KeyError(msg)
     return reservation
 
 
@@ -83,7 +100,7 @@ def generate_reservations(data_file, interval=200, max_no_nights=15, n=1):
                 continue
             reservation_id += 1
 
-            reservation_data = OrderedDict()
+            reservation_data = {}
             reservation_data['ReservationId'] = reservation_id
             reservation_data['RoomId'] = room_name
             # draws of customer's name and surname
@@ -91,7 +108,7 @@ def generate_reservations(data_file, interval=200, max_no_nights=15, n=1):
             reservation_data['Surname'] = random.choice(surnames)
             reservation_data['CheckIn'] = checkin_date
             reservation_data['CheckOut'] = checkout_date
-            # optional fields (add date of creation and more optional fields)
+            # optional fields
             reservation_data['Pax'] = random.randint(1, 5)
             reservation_data['Parking'] = random.choice([True, False]) # fix: part of staying time
             reservation_data['BookingType'] = random.choice(['Booking', 'Email', 'Phone'])
@@ -125,65 +142,54 @@ def reservation_data_builder(self):
     return data
 
 # DataHolder method
-def add_booking_as_text(self, *args, **kw):
-    '''
-    Method to create a Reservation from given **kw and  write
-    its attributes  in 'self.source' as strings. 
-    'self.data' and 'self.busy_days' are then updated
-    Note: CheckIn and CheckOut must
-    '''
-
-    # Controls on inserted field
-    if any(field not in kw.keys() for field in mandatory_fields):
-        raise KeyError('Mandatory field missing')
-    if any(field not in all_fields for field in kw.keys()):
-        raise KeyError('Wrong field inserted. Allowed fields are: '
-                       + str(all_fields))
-
-    reservation = kw
-    reservation['CheckIn'] = kw['CheckIn'] 
-    reservation['CheckOut'] = kw['CheckOut']
-    # Conversion of checkin and checkout
-    # to datedatime.date if passed as strings (future use)
-    try:
-        checkin_date = datetime.strptime(kw['CheckIn'],
-                                         DATE_FMT).date()
-    except TypeError:
-        pass
-    try:
-        checkout_date = datetime.strptime(kw['CheckOut'],
-                                          DATE_FMT).date()
-    except TypeError:
-        pass
-    # Checking room availability
-    room_is_available = is_room_available(self.data,
-                                          reservation['RoomId'],
-                                          checkin_date,
-                                          checkout_date)
-    if self.data and not room_is_available:
-        msg =  (reservation['RoomId'] + ' cannot be booked in ' +
-                format_date_range(checkin_date, checkout_date))
-        print(msg)
-        return False      
-    # Setting sequential id 
-    last_used_id = int(self.data[-1].id) if self.data else 0
-    reservation_id = last_used_id + 1
-    reservation['ReservationId'] = reservation_id
-    # Creating a complete reservation dictionary
-    new_reservation = complete_reservation_dict(reservation)
-    # Appending a fields' values textline to 'self.source'
-    with open(self.source, 'a') as f:
-        new_reservation_line = string_from_reservation(new_reservation)
-        f.write(new_reservation_line)
-    f.close()
-    # Updating self.data with a Reservation object and
-    # self.busy_days
-    self.data.append(Reservation(new_reservation))
-    for night in date_range(checkin_date, checkout_date):
-        dates = list(self.busy_days.keys())
-        if night not in dates:
-            self.busy_days[night] = [new_reservation['RoomId']]
-            dates.append(night)
-        else:
-            self.busy_days[night].append(new_reservation['RoomId'])
-    return
+    def add_booking_as_text(self, *args, **kw):
+        '''
+        Method to create a Reservation from given **kw and  write
+        its attributes  in 'self.source' as strings. 
+        'self.data' and 'self.busy_days' are then updated
+        Note: CheckIn and CheckOut can be either strings or
+        datetime.date objects
+        Allowed keys of 'kw' are found in settings.constants
+        '''
+        reservation = complete_reservation_dict(kw)
+        # Conversion of checkin and checkout
+        # to datedatime.date if passed as strings (future use)
+        try:
+            checkin_date = datetime.strptime(reservation['CheckIn'],
+                                             DATE_FMT).date()
+        except TypeError:
+            checkin_date = reservation['CheckIn']
+        try:
+            checkout_date = datetime.strptime(reservation['CheckOut'],
+                                              DATE_FMT).date()
+        except TypeError:
+            checkout_date = reservation['CheckOut']
+        # Checking room availability
+        room_is_available = is_room_available(self.data,
+                                              reservation['RoomId'],
+                                              checkin_date,
+                                              checkout_date)
+        if self.data and not room_is_available:
+            msg =  (reservation['RoomId'] + ' cannot be booked in ' +
+                    format_date_range(checkin_date, checkout_date))
+            print(msg)
+            return False      
+        # Setting sequential id 
+        last_used_id = int(self.data[-1].id) if self.data else 0
+        reservation_id = last_used_id + 1
+        reservation['ReservationId'] = reservation_id
+        # Appending a fields' values textline to 'self.source'
+        with open(self.source, 'a') as f:
+            new_reservation_line = string_from_reservation(new_reservation)
+            f.write(new_reservation_line)
+        # Updating self.data with a Reservation object and
+        # self.busy_days
+        self.data.append(Reservation(new_reservation))
+        for night in date_range(checkin_date, checkout_date):
+            dates = list(self.busy_days.keys())
+            if night not in dates:
+                self.busy_days[night] = [new_reservation['RoomId']]
+                dates.append(night)
+            else:
+                self.busy_days[night].append(new_reservation['RoomId'])
+        return
