@@ -18,3 +18,10 @@ reservation_template = OrderedDict({"ReservationId": '',
                                     "BookingType": '', 
                                     "Breakfast": ''
                                     })
+
+mandatory_fields = ['RoomId', 'Name', 'Surname',
+                    'CheckIn', 'CheckOut']
+
+optional_fields = ['Pax', 'Parking', 'BookingType', 'Breakfast']
+
+all_fields = ['ReservationId'] + mandatory_fields + optional_fields
