@@ -1,31 +1,68 @@
 from datetime import timedelta
-from settings.constants import DATE_FMT, reservation_template
+from settings.constants import DATE_FMT, reservation_template, all_fields, mandatory_fields, optional_fields
 from collections import OrderedDict
 
 
-def set_reservation_template(*reservation_data):
-    reservation = OrderedDict()
-    res_data = reservation_data[0]
-    if isinstance(res_data, OrderedDict):
-        for key, value in reservation_template.items():
-            if key in res_data and res_data[key]:
-                reservation[key] = res_data[key]
-            else:
-                reservation[key] = value
-        return reservation
-    else:
-        for key, value in zip(reservation_template.keys(), res_data):
-            reservation[key] = value
-        return reservation
+def complete_reservation_dict(incomplete_reservation_dict): 
+    '''
+    Given a dictionary of variable number of reservation fields, 
+    return the same dict but, if any of 'optional_fields' 
+    field is missing it will be added with an empty string value.
+    Errores raised if mandatories missing or mispelled inserted
+    '''
+    reservation = {}
+    # Adding fields present in 'all_fields' and not given
+    for field in mandatory_fields:
+        try:
+            reservation[field] = incomplete_reservation_dict[field]
+            del incomplete_reservation_dict[field]
+        except KeyError:
+            msg = ('Field \'' + str(field) + '\' is mandatory.' +
+                   'Right spellings are: ' + str(mandatory_fields))
+            raise KeyError(msg)           
+    for field in optional_fields:
+        try:
+            reservation[field] = incomplete_reservation_dict[field]
+            del incomplete_reservation_dict[field]
+        except KeyError:
+            reservation[field] = ''
+    if incomplete_reservation_dict:
+        allowed_fields = mandatory_fields + optional_fields
+        msg = ('Wrong fields inserted. Allowed fields are: ' +
+               str(allowed_fields))
+        raise KeyError(msg)
+    return reservation
 
- 
-def format_reservation_line(reservation):
+
+def string_from_reservation(reservation_dict):
+    '''
+    Given a reservation dict, return a string of all 
+    reservation values ('\t' split).
+    '''
     reservation_line = str()
-    for value in reservation.values():
-        reservation_line += str(value)
-        reservation_line += '\t'
+    last_field_index = len(all_fields) - 1
+    for field_index, field in enumerate(all_fields):
+        reservation_line += str(reservation_dict[field])
+        # Last field without tabbing
+        if field_index < last_field_index:
+            reservation_line += '\t'
     reservation_line += '\n'
     return reservation_line
+
+
+def reservation_dict_from_textline(reservation_line):
+    '''
+    Return a reservation dict by taking field values from
+    'reservation_line' words.
+    If 'reservation_line' is hand-written, pay attention
+    that values respect order given in 'all_reservation_fields', 
+    to avoid mismatches. 
+    '''
+    reservation = {}
+    reservation_values = reservation_line.split('\t')
+    for key, value in zip(all_fields, reservation_values):
+        reservation[key] = value
+    return reservation
 
     
 def customer_field_formatter(customer_name):
