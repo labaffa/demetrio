@@ -1,5 +1,5 @@
 from datetime import timedelta
-from settings.constants import DATE_FMT, reservation_template, all_fields, mandatory_fields, optional_fields
+from settings.constants import DATE_FMT, all_fields, mandatory_fields, optional_fields
 from collections import OrderedDict
 from utils.checkers import validate_date
 

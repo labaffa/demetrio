@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from settings.constants import rooms, DATE_FMT, mandatory_fields, all_fields
 from utils.checkers import is_room_available
-from utils.formatters import format_date_range, customer_field_formatter, date_or_date_range, set_reservation_template, reservation_from_textline, complete_reservation, string_from_reservation
+from utils.formatters import format_date_range, date_or_date_range, reservation_from_textline, complete_reservation, string_from_reservation
 from utils.generators import date_range, generate_reservations
 from classes.demetrio_classes import Reservation
 

@@ -1,12 +1,11 @@
 import random
 from datetime import date, timedelta
 from collections import OrderedDict
-
 from settings.names import names # a list of names
 from settings.surnames import surnames # a list of surnames 
 from settings.constants import rooms
 from utils.checkers import is_room_available
-from utils.formatters import set_reservation_template, format_reservation_line, complete_reservation, string_from_reservation
+from utils.formatters import complete_reservation, string_from_reservation
 from classes.demetrio_classes import Reservation
 
         
