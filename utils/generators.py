@@ -24,14 +24,12 @@ from classes.demetrio_classes import Reservation
     
 def date_range(*args):
     """ Generator of datetime.date objects in a given range of dates
-        with steps of "step_days".
-        Args can be start, stop and step_days. 
-        start and stop can be either integers or datetime.date
-        if integers: start is "num of days from today"
-                     stop is "num of days from start"    
-        One arg given: stop (def: start = date.today(), step_days = 1)
-        Two args given: start, stop (def: step_days = 1)
-        Three args given: start, stop and step_days.
+      
+    integers:
+    date_range(start = 0, end[, step]) -> 'end' dates from today
+
+    datetime.date objects:
+    date_range(start = today(), end[,step]) -> 'from today to end' dates
     """
     # Controls on number of given arguments and meaning assignment 
     if len(args) == 1:
@@ -79,8 +77,7 @@ def generate_reservations(data_file, interval=200, max_no_nights=15, n=1):
     Creates n (default=1) Reservation objects with checkin
     in a range of 'interval' days from 'today' day onward
     and max nights number 'max_no_nights'.
-    Appends it to 'self.source' containing other reservations.
-    'data_file' is created if it does not exist.
+    Save them on 'data_source' as textlines
     """
     reservations = list()
     reservation_id = 0
@@ -122,3 +119,5 @@ def generate_reservations(data_file, interval=200, max_no_nights=15, n=1):
 
     f.close()
     return reservations
+
+print(date_range.__doc__)

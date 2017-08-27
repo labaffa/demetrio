@@ -13,6 +13,10 @@ class DataHolder:
         self.busy_days = self.busy_days_builder(self.data)
         
     def reservation_data_builder(self):
+        """
+        Populate list of Reservation objects from data_source or 
+        create a new one if data_source does not exist   
+        """
         data = []
         try:
             with open(self.source, 'r') as f:
@@ -25,12 +29,16 @@ class DataHolder:
         except IOError: 
             print('\'Reservation file\' you have chosen does not exist.'
                   + '\nGoing to create one with a random reservation!')
-            data = generate_reservations(self.source, n=1000)
-            
+            data = generate_reservations(self.source, n=1000)       
         return data
-        
+
+    
     def busy_days_builder(self, reservation_data):
-        # Populate the busy_days dictionary
+        """Populate the busy_days dictionary
+
+        keys: dates with at least one room booked
+        values: list of rooms booked for the 'key' night
+        """
         busy_days = {}
         if len(reservation_data) > 0:
             dates = list(busy_days.keys())
@@ -57,12 +65,12 @@ class DataHolder:
         return busy_days
 
     def add_booking_as_text(self, *args, **kw):
-        '''
-        Method to create a Reservation from given **kw and  write
-        its attributes  in 'self.source' as strings. 
+        """Create Reservation object from 'kw' and save it as text
+        
+        keywords -> mandatory_fields + optional_fields elements
         'self.data' and 'self.busy_days' are then updated
-        Note: CheckIn and CheckOut must
-        '''
+        Note: CheckIn and CheckOut must be datetime.date objects
+        """
         reservation = complete_reservation(kw)
         # Conversion of checkin and checkout
         # to datedatime.date if passed as strings (future use)
@@ -108,7 +116,12 @@ class DataHolder:
         return
 
     
-    def get_availability_for_room(self, room_name, start_day, end_day, return_day_obj=False): 
+    def get_availability_for_room(self, room_name, start_day, end_day, return_day_obj=False):
+        """Return a list of free dates for a room in a given period
+        
+        If return_day_obj = True consecutives dates are given in range
+        format
+        """
         available_days = list() 
         for day, list_of_busy_rooms in self.busy_days.items():
             if start_day <= day < end_day:
@@ -127,6 +140,7 @@ class DataHolder:
             return sorted(available_days)
 
     def get_availability(self, start_day, end_day, pax=0, return_day_obj=False):
+        """Same of get_availability_for_room but applied to all rooms"""
         for room_name in rooms.keys():
             if pax:
                 if pax > rooms[room_name]:

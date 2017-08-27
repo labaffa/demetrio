@@ -4,12 +4,12 @@ from collections import OrderedDict
 
 
 def complete_reservation(incomplete_reservation): 
-    '''
+    """
     Given a dictionary of variable number of reservation fields, 
     return the same dict but, if any of 'optional_fields' 
     field is missing it will be added with an empty string value.
-    Errores raised if mandatories missing or mispelled inserted
-    '''
+    Errors raised if mandatories missing or mispelled inserted
+    """
     reservation = {}
     # Adding fields present in 'all_fields' and not given
     for field in mandatory_fields:
@@ -35,10 +35,10 @@ def complete_reservation(incomplete_reservation):
 
 
 def string_from_reservation(reservation):
-    '''
+    """
     Given a reservation dict, return a string of all 
     reservation values ('\t' split).
-    '''
+    """
     reservation_line = str()
     last_field_index = len(all_fields) - 1
     for field_index, field in enumerate(all_fields):
@@ -51,13 +51,13 @@ def string_from_reservation(reservation):
 
 
 def reservation_from_textline(reservation_line):
-    '''
+    """
     Return a reservation dict by taking field values from
     'reservation_line' words.
-    If 'reservation_line' is hand-written, pay attention
-    that values respect order given in 'all_reservation_fields', 
+    If 'reservation_line' is hand-typed, pay attention
+    that values respect order given in 'all_fields' 
     to avoid mismatches. 
-    '''
+    """
     reservation = {}
     reservation_values = reservation_line.split('\t')
     for key, value in zip(all_fields, reservation_values):
@@ -74,6 +74,10 @@ def customer_field_formatter(customer_name):
 
 
 def format_date_range(start, end):
+    """
+    Return a 'range format' if end and start are different dates,
+    and start/end otherwise
+    """
     if start == end:
         formatted_date = start.strftime(DATE_FMT)
         return formatted_date
