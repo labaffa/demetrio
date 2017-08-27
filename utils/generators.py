@@ -9,19 +9,7 @@ from utils.checkers import is_room_available
 from utils.formatters import set_reservation_template, format_reservation_line, complete_reservation, string_from_reservation
 from classes.demetrio_classes import Reservation
 
-#def parse_args():
-#    def set_arguments(func, *args):
-#        def case(*args):
-#            if len(args) == 1:
-#                return func(args[0])
-#            if len(args) == 2:
-#                return 
-#            
-#        return case
-#    
-#    return set_arguments
-    
-    
+        
 def date_range(*args):
     """ Generator of datetime.date objects in a given range of dates
       
@@ -120,4 +108,4 @@ def generate_reservations(data_file, interval=200, max_no_nights=15, n=1):
     f.close()
     return reservations
 
-print(date_range.__doc__)
+

@@ -67,23 +67,13 @@ class DataHolder:
     def add_booking_as_text(self, *args, **kw):
         """Create Reservation object from 'kw' and save it as text
         
-        keywords -> mandatory_fields + optional_fields elements
-        'self.data' and 'self.busy_days' are then updated
+        keywords = 'mandatory_fields + optional_fields' elements
+        'self.data' and 'self.busy_days' update
         Note: CheckIn and CheckOut must be datetime.date objects
         """
         reservation = complete_reservation(kw)
-        # Conversion of checkin and checkout
-        # to datedatime.date if passed as strings (future use)
-        try:
-            checkin_date = datetime.strptime(reservation['CheckIn'],
-                                             DATE_FMT).date()
-        except TypeError:
-            checkin_date = reservation['CheckIn']
-        try:
-            checkout_date = datetime.strptime(reservation['CheckOut'],
-                                              DATE_FMT).date()
-        except TypeError:
-            checkout_date = reservation['CheckOut']
+        checkin_date = reservation['CheckIn']
+        checkout_date = reservation['CheckOut'] 
         # Checking room availability
         room_id = reservation['RoomId']
         room_is_available = is_room_available(self.data,

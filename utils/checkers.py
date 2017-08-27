@@ -2,6 +2,24 @@ from datetime import timedelta
 from settings.constants import rooms
 
 
+def validate_date(date_input):
+    """str -> datetime.date. datetime.date -> do nothing"""
+    if isinstance(date_input, date):
+       return
+    if isinstance(date_input, str):
+        return datetime.strptime(date_input, DATE_FMT).date()
+    raise ValueError('Data not understood')
+
+
+def validate_datetime(date_input):
+    """str -> datetime.datetime. datetime.datetime -> do nothing"""
+    if isinstance(date_input, datetime):
+       return
+    if isinstance(date_input, str):
+        return datetime.strptime(date_input, DATE_FMT)
+    raise ValueError('Data not understood')
+
+
 def is_room_available(reservation_data, room_name, first_day, last_day=None):
         """
         Return True if Room with 'room_name' is free during

@@ -1,6 +1,7 @@
 from datetime import timedelta
 from settings.constants import DATE_FMT, reservation_template, all_fields, mandatory_fields, optional_fields
 from collections import OrderedDict
+from utils.checkers import validate_date
 
 
 def complete_reservation(incomplete_reservation): 
@@ -11,7 +12,7 @@ def complete_reservation(incomplete_reservation):
     Errors raised if mandatories missing or mispelled inserted
     """
     reservation = {}
-    # Adding fields present in 'all_fields' and not given
+    # Inserting mandatory fields
     for field in mandatory_fields:
         try:
             reservation[field] = incomplete_reservation[field]
@@ -19,13 +20,10 @@ def complete_reservation(incomplete_reservation):
         except KeyError:
             msg = ('Field \'' + str(field) + '\' is mandatory.' +
                    'Right spellings are: ' + str(mandatory_fields))
-            raise KeyError(msg)           
+            raise KeyError(msg)
+    # Inserting optional fields
     for field in optional_fields:
-        try:
-            reservation[field] = incomplete_reservation[field]
-            del incomplete_reservation[field]
-        except KeyError:
-            reservation[field] = ''
+        reservation[field] = incomplete_reservation.pop(field, '')
     if incomplete_reservation:
         allowed_fields = mandatory_fields + optional_fields
         msg = ('Wrong fields inserted. Allowed fields are: ' +
@@ -39,6 +37,10 @@ def string_from_reservation(reservation):
     Given a reservation dict, return a string of all 
     reservation values ('\t' split).
     """
+    # datetime.date -> str()
+    reservation['CheckIn'] = reservation['CheckIn'].strftime(DATE_FMT)
+    reservation['CheckOut'] = reservation['CheckOut'].strftime(DATE_FMT)
+    # Writing field values in one textline
     reservation_line = str()
     last_field_index = len(all_fields) - 1
     for field_index, field in enumerate(all_fields):
@@ -62,6 +64,9 @@ def reservation_from_textline(reservation_line):
     reservation_values = reservation_line.split('\t')
     for key, value in zip(all_fields, reservation_values):
         reservation[key] = value
+    # checkin, checkout -> datetime.date conversion
+    validate_date(reservation['CheckIn'])
+    validate_date(reservation['CheckOut'])
     return reservation
 
     
