@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from settings.constants import rooms, DATE_FMT, mandatory_fields, all_fields
 from utils.checkers import is_room_available
-from utils.formatters import format_date_range, customer_field_formatter, date_or_date_range, set_reservation_template, reservation_dict_from_textline, complete_reservation_dict, string_from_reservation
+from utils.formatters import format_date_range, customer_field_formatter, date_or_date_range, set_reservation_template, reservation_from_textline, complete_reservation, string_from_reservation
 from utils.generators import date_range, generate_reservations
 from classes.demetrio_classes import Reservation
 
@@ -18,7 +18,7 @@ class DataHolder:
             with open(self.source, 'r') as f:
                 lines_list = f.read().splitlines()
                 for line in lines_list:
-                    reservation = reservation_dict_from_textline(line)
+                    reservation = reservation_from_textline(line)
                     data.append(Reservation(reservation))
             f.close()
         # if 'data_source' does not exist create them
@@ -63,8 +63,7 @@ class DataHolder:
         'self.data' and 'self.busy_days' are then updated
         Note: CheckIn and CheckOut must
         '''
-        reservation = complete_reservation_dict(kw)
-#        if not reservation: return False # if mandatory missing
+        reservation = complete_reservation(kw)
         # Conversion of checkin and checkout
         # to datedatime.date if passed as strings (future use)
         try:
@@ -78,12 +77,13 @@ class DataHolder:
         except TypeError:
             checkout_date = reservation['CheckOut']
         # Checking room availability
+        room_id = reservation['RoomId']
         room_is_available = is_room_available(self.data,
-                                              reservation['RoomId'],
+                                              room_id,
                                               checkin_date,
                                               checkout_date)
         if self.data and not room_is_available:
-            msg =  (reservation['RoomId'] + ' cannot be booked in ' +
+            msg =  (room_id + ' cannot be booked in ' +
                     format_date_range(checkin_date, checkout_date))
             print(msg)
             return False      
@@ -108,23 +108,23 @@ class DataHolder:
         return
 
     
-        def get_availability_for_room(self, room_name, start_day, end_day, return_day_obj=False): 
-            available_days = list() 
-            for day, list_of_busy_rooms in self.busy_days.items():
-                if start_day <= day < end_day:
-                    if room_name not in list_of_busy_rooms:
-                        available_days.append(day)
+    def get_availability_for_room(self, room_name, start_day, end_day, return_day_obj=False): 
+        available_days = list() 
+        for day, list_of_busy_rooms in self.busy_days.items():
+            if start_day <= day < end_day:
+                if room_name not in list_of_busy_rooms:
+                    available_days.append(day)
 
-            # day is now at the last busy day
-            if start_day > day:
-                # The whole period is available!
-                available_days.append(format_date_range(start_day, end_day))
-                return available_days
+        # day is now at the last busy day
+        if start_day > day:
+            # The whole period is available!
+            available_days.append(format_date_range(start_day, end_day))
+            return available_days
 
-            if not return_day_obj:
-                return date_or_date_range(sorted(available_days))
-            else:
-                return sorted(available_days)
+        if not return_day_obj:
+            return date_or_date_range(sorted(available_days))
+        else:
+            return sorted(available_days)
 
     def get_availability(self, start_day, end_day, pax=0, return_day_obj=False):
         for room_name in rooms.keys():

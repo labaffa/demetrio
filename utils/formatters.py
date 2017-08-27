@@ -3,7 +3,7 @@ from settings.constants import DATE_FMT, reservation_template, all_fields, manda
 from collections import OrderedDict
 
 
-def complete_reservation_dict(incomplete_reservation_dict): 
+def complete_reservation(incomplete_reservation): 
     '''
     Given a dictionary of variable number of reservation fields, 
     return the same dict but, if any of 'optional_fields' 
@@ -14,19 +14,19 @@ def complete_reservation_dict(incomplete_reservation_dict):
     # Adding fields present in 'all_fields' and not given
     for field in mandatory_fields:
         try:
-            reservation[field] = incomplete_reservation_dict[field]
-            del incomplete_reservation_dict[field]
+            reservation[field] = incomplete_reservation[field]
+            del incomplete_reservation[field]
         except KeyError:
             msg = ('Field \'' + str(field) + '\' is mandatory.' +
                    'Right spellings are: ' + str(mandatory_fields))
             raise KeyError(msg)           
     for field in optional_fields:
         try:
-            reservation[field] = incomplete_reservation_dict[field]
-            del incomplete_reservation_dict[field]
+            reservation[field] = incomplete_reservation[field]
+            del incomplete_reservation[field]
         except KeyError:
             reservation[field] = ''
-    if incomplete_reservation_dict:
+    if incomplete_reservation:
         allowed_fields = mandatory_fields + optional_fields
         msg = ('Wrong fields inserted. Allowed fields are: ' +
                str(allowed_fields))
@@ -34,7 +34,7 @@ def complete_reservation_dict(incomplete_reservation_dict):
     return reservation
 
 
-def string_from_reservation(reservation_dict):
+def string_from_reservation(reservation):
     '''
     Given a reservation dict, return a string of all 
     reservation values ('\t' split).
@@ -42,7 +42,7 @@ def string_from_reservation(reservation_dict):
     reservation_line = str()
     last_field_index = len(all_fields) - 1
     for field_index, field in enumerate(all_fields):
-        reservation_line += str(reservation_dict[field])
+        reservation_line += str(reservation[field])
         # Last field without tabbing
         if field_index < last_field_index:
             reservation_line += '\t'
@@ -50,7 +50,7 @@ def string_from_reservation(reservation_dict):
     return reservation_line
 
 
-def reservation_dict_from_textline(reservation_line):
+def reservation_from_textline(reservation_line):
     '''
     Return a reservation dict by taking field values from
     'reservation_line' words.
