@@ -1,31 +1,73 @@
 from datetime import timedelta
-from settings.constants import DATE_FMT, reservation_template
+from settings.constants import DATE_FMT, all_fields, mandatory_fields, optional_fields
 from collections import OrderedDict
+from utils.checkers import validate_date
 
 
-def set_reservation_template(*reservation_data):
-    reservation = OrderedDict()
-    res_data = reservation_data[0]
-    if isinstance(res_data, OrderedDict):
-        for key, value in reservation_template.items():
-            if key in res_data and res_data[key]:
-                reservation[key] = res_data[key]
-            else:
-                reservation[key] = value
-        return reservation
-    else:
-        for key, value in zip(reservation_template.keys(), res_data):
-            reservation[key] = value
-        return reservation
+def complete_reservation(incomplete_reservation): 
+    """
+    Given a dictionary of variable number of reservation fields, 
+    return the same dict but, if any of 'optional_fields' 
+    field is missing it will be added with an empty string value.
+    Errors raised if mandatories missing or mispelled inserted
+    """
+    reservation = {}
+    # Inserting mandatory fields
+    for field in mandatory_fields:
+        try:
+            reservation[field] = incomplete_reservation[field]
+            del incomplete_reservation[field]
+        except KeyError:
+            msg = ('Field \'' + str(field) + '\' is mandatory.' +
+                   'Right spellings are: ' + str(mandatory_fields))
+            raise KeyError(msg)
+    # Inserting optional fields
+    for field in optional_fields:
+        reservation[field] = incomplete_reservation.pop(field, '')
+    if incomplete_reservation:
+        allowed_fields = mandatory_fields + optional_fields
+        msg = ('Wrong fields inserted. Allowed fields are: ' +
+               str(allowed_fields))
+        raise KeyError(msg)
+    return reservation
 
- 
-def format_reservation_line(reservation):
+
+def string_from_reservation(reservation):
+    """
+    Given a reservation dict, return a string of all 
+    reservation values ('\t' split).
+    """
+    # datetime.date -> str()
+    reservation['CheckIn'] = reservation['CheckIn'].strftime(DATE_FMT)
+    reservation['CheckOut'] = reservation['CheckOut'].strftime(DATE_FMT)
+    # Writing field values in one textline
     reservation_line = str()
-    for value in reservation.values():
-        reservation_line += str(value)
-        reservation_line += '\t'
+    last_field_index = len(all_fields) - 1
+    for field_index, field in enumerate(all_fields):
+        reservation_line += str(reservation[field])
+        # Last field without tabbing
+        if field_index < last_field_index:
+            reservation_line += '\t'
     reservation_line += '\n'
     return reservation_line
+
+
+def reservation_from_textline(reservation_line):
+    """
+    Return a reservation dict by taking field values from
+    'reservation_line' words.
+    If 'reservation_line' is hand-typed, pay attention
+    that values respect order given in 'all_fields' 
+    to avoid mismatches. 
+    """
+    reservation = {}
+    reservation_values = reservation_line.split('\t')
+    for key, value in zip(all_fields, reservation_values):
+        reservation[key] = value
+    # checkin, checkout -> datetime.date conversion
+    validate_date(reservation['CheckIn'])
+    validate_date(reservation['CheckOut'])
+    return reservation
 
     
 def customer_field_formatter(customer_name):
@@ -37,6 +79,10 @@ def customer_field_formatter(customer_name):
 
 
 def format_date_range(start, end):
+    """
+    Return a 'range format' if end and start are different dates,
+    and start/end otherwise
+    """
     if start == end:
         formatted_date = start.strftime(DATE_FMT)
         return formatted_date
