@@ -1,8 +1,7 @@
 # coding=utf-8
-
+from classes.data_holder import *
 #import classes_gui as gui
 from classes import *
-from functions import *
 import pickle
 from  io_functions import *
 import calendar
@@ -14,6 +13,9 @@ except ImportError: # py3k
     import tkinter as tk
     import tkinter.font as tkFont
 
+a = DataHolder('test.dat')
+b = a.data[-2].checkin
+print(b)
 
 # todolist:
 # - create as much Day obj as datetime of calendar

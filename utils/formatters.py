@@ -65,8 +65,8 @@ def reservation_from_textline(reservation_line):
     for key, value in zip(all_fields, reservation_values):
         reservation[key] = value
     # checkin, checkout -> datetime.date conversion
-    validate_date(reservation['CheckIn'])
-    validate_date(reservation['CheckOut'])
+    reservation['CheckIn'] = validate_date(reservation['CheckIn'])
+    reservation['CheckOut'] = validate_date(reservation['CheckOut'])
     return reservation
 
     
