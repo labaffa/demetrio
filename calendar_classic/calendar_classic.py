@@ -227,6 +227,7 @@ class Dates_table(tk.Frame):
 
 
 class Calendar_classic(tk.Frame):
+    """A classic calendar with arrows to change displayed month"""
     def __init__(self, master=None, **kw):
         self.calendar = kw.pop('calendar', calendar.LocaleTextCalendar())
         # Set first day of the first-displayed month (def: today-month)
