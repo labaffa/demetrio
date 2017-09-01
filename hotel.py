@@ -13,9 +13,6 @@ except ImportError: # py3k
     import tkinter as tk
     import tkinter.font as tkFont
 
-a = DataHolder('test.dat')
-b = a.data[-2].checkin
-print(b)
 
 # todolist:
 # - create as much Day obj as datetime of calendar
