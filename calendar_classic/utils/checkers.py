@@ -13,9 +13,9 @@ def get_row(linear_index, matrix_columns):
     From a matrix of given columns return the row index
     corresponding to a given linear index
     """
-    index = int(linear_index)
-    columns = int(matrix_columns)
-    return index/columns
+    index = linear_index
+    columns = matrix_columns
+    return int(index/columns)
 
 
 def get_column(linear_index, matrix_columns):
@@ -23,6 +23,6 @@ def get_column(linear_index, matrix_columns):
     From a matrix of given columns return the column index
     corresponding to a given linear index
     """
-    index = int(linear_index)
-    columns = int(matrix_columns)
-    return index - (index/columns)*columns
+    index = linear_index
+    columns = matrix_columns
+    return int(index) - int(index/columns)*int(columns)
