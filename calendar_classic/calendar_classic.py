@@ -158,7 +158,11 @@ class Dates_table(tk.Frame):
         self.first_of_month = date(self.reference_date.year,
                                    self.reference_date.month, 1)
         tk.Frame.__init__(self, master, **kw)
-        self.date_boxes = [tk.Label(self) for _ in range(7*6)]
+        # Number of rows and columns of the table
+        self.no_rows = 6
+        self.no_cols = 7
+        self.date_boxes = [tk.Label(self)
+                           for _ in range(self.no_rows*self.no_cols)]
         self.configure(table_conf)
         self.first_display()
 
@@ -192,20 +196,21 @@ class Dates_table(tk.Frame):
             # week of the first month-day.
             shift = i - weekday_of_first
             current_date = self.first_of_month + timedelta(shift)
-            # Assign number and style of the box 
+            # Assign number and style of the box
             date_box.configure(date_box_conf,
                                anchor='ne',
                                text=current_date.day)
             self.label_config(date_box, current_date)
             # Grid the box in the right row, column
-            box_row, box_column = get_row(i, 7), get_column(i, 7)
+            box_row = get_row(i, self.no_cols)
+            box_column = get_column(i, self.no_cols)
             date_box.grid(row=box_row,
                           column=box_column,
                           sticky='news')
         # Equal space for each box
-        for row in range(6):
+        for row in range(self.no_rows):
             self.rowconfigure(row, weight=1)
-        for col in range(7):
+        for col in range(self.no_cols):
             self.columnconfigure(col, weight=1)
 
     def update(self):
