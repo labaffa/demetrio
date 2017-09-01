@@ -1,17 +1,11 @@
 import calendar
 from datetime import date, timedelta
-from calendar_classic.settings.config import (calendar_button_conf,
-                                              header_conf,
-                                              this_month_conf,
-                                              other_month_conf,
-                                              today_conf,
-                                              weekdays_conf,
-                                              month_year_conf,
-                                              table_conf,
-                                              date_box_conf,
-                                              weekday_labels_conf)
-from calendar_classic.utils.checkers import is_today, get_row, get_column
-
+from settings.config import (calendar_button_conf, header_conf,
+                             this_month_conf, other_month_conf,
+                             today_conf, weekdays_conf, month_year_conf,
+                             table_conf, date_box_conf,
+                             weekday_labels_conf)
+from utils.checkers import is_today, get_row, get_column
 try:
     import Tkinter as tk
     import tkFont
