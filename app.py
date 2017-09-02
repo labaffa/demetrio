@@ -1,4 +1,4 @@
-from calendar_classic.calendar_classic import Home_screen
+from calendar_folder.calendar_classic import Home_screen
 
 
 if __name__ == '__main__':
