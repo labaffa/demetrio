@@ -1,6 +1,6 @@
-from calendar_classic.calendar_classic import Home_screen
+from calendar_classic import Home_screen
 
 
 if __name__ == '__main__':
-	root = Home_screen()
-	root.mainloop()
+    root = Home_screen()
+    root.mainloop()
