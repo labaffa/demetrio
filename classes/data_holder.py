@@ -8,14 +8,14 @@ from classes.demetrio_classes import Reservation
 
 class DataHolder:
     def __init__(self, data_source):
-        self.source = data_source 
+        self.source = data_source
         self.data = self.reservation_data_builder()
         self.busy_days = self.busy_days_builder(self.data)
-        
+
     def reservation_data_builder(self):
         """
-        Populate list of Reservation objects from data_source or 
-        create a new one if data_source does not exist   
+        Populate list of Reservation objects from data_source or
+        create a new one if data_source does not exist
         """
         data = []
         try:
@@ -26,13 +26,12 @@ class DataHolder:
                     data.append(Reservation(reservation))
             f.close()
         # if 'data_source' does not exist create them
-        except IOError: 
+        except IOError:
             print('\'Reservation file\' you have chosen does not exist.'
                   + '\nGoing to create one with a random reservation!')
-            data = generate_reservations(self.source, n=1000)       
+            data = generate_reservations(self.source, n=1000)
         return data
 
-    
     def busy_days_builder(self, reservation_data):
         """Populate the busy_days dictionary
 
@@ -61,34 +60,33 @@ class DataHolder:
                         dates.append(next_date)
                     else:
                         busy_days[next_date].append(reservation.room.name)
-            
         return busy_days
 
     def add_booking_as_text(self, *args, **kw):
         """Create Reservation object from 'kw' and save it as text
-        
+
         keywords = 'mandatory_fields + optional_fields' elements
         'self.data' and 'self.busy_days' update
         Note: CheckIn and CheckOut must be datetime.date objects
         """
-        reservation = complete_reservation(kw)
-        checkin_date = reservation['CheckIn']
-        checkout_date = reservation['CheckOut'] 
+        new_reservation = complete_reservation(kw)
+        checkin_date = new_reservation['CheckIn']
+        checkout_date = new_reservation['CheckOut']
         # Checking room availability
-        room_id = reservation['RoomId']
+        room_id = new_reservation['RoomId']
         room_is_available = is_room_available(self.data,
                                               room_id,
                                               checkin_date,
                                               checkout_date)
         if self.data and not room_is_available:
-            msg =  (room_id + ' cannot be booked in ' +
-                    format_date_range(checkin_date, checkout_date))
+            msg = (room_id + ' cannot be booked in ' +
+                   format_date_range(checkin_date, checkout_date))
             print(msg)
-            return False      
-        # Setting sequential id 
+            return False
+        # Setting sequential id
         last_used_id = int(self.data[-1].id) if self.data else 0
-        reservation_id = last_used_id + 1
-        reservation['ReservationId'] = reservation_id
+        new_reservation_id = last_used_id + 1
+        new_reservation['ReservationId'] = new_reservation_id
         # Appending a fields' values textline to 'self.source'
         with open(self.source, 'a') as f:
             new_reservation_line = string_from_reservation(new_reservation)
@@ -105,14 +103,13 @@ class DataHolder:
                 self.busy_days[night].append(new_reservation['RoomId'])
         return
 
-    
     def get_availability_for_room(self, room_name, start_day, end_day, return_day_obj=False):
         """Return a list of free dates for a room in a given period
-        
+
         If return_day_obj = True consecutives dates are given in range
         format
         """
-        available_days = list() 
+        available_days = list()
         for day, list_of_busy_rooms in self.busy_days.items():
             if start_day <= day < end_day:
                 if room_name not in list_of_busy_rooms:
@@ -138,5 +135,3 @@ class DataHolder:
             available_days = self.get_availability_for_room(room_name, start_day, end_day, return_day_obj=return_day_obj)
             print('Room %s is available on:' % room_name)
             print(available_days)
-
-

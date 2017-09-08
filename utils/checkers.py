@@ -3,18 +3,18 @@ from settings.constants import rooms, DATE_FMT
 
 
 def validate_date(date_input):
-    """str -> datetime.date. datetime.date -> do nothing"""
+    """str -> datetime.date; datetime.date -> do nothing"""
     if isinstance(date_input, date):
-       return
+        return
     if isinstance(date_input, str):
         return datetime.strptime(date_input, DATE_FMT).date()
     raise ValueError('Data not understood')
 
 
 def validate_datetime(date_input):
-    """str -> datetime.datetime. datetime.datetime -> do nothing"""
+    """str -> datetime.datetime; datetime.datetime -> do nothing"""
     if isinstance(date_input, datetime):
-       return
+        return
     if isinstance(date_input, str):
         return datetime.strptime(date_input, DATE_FMT)
     raise ValueError('Data not understood')
@@ -23,17 +23,17 @@ def validate_datetime(date_input):
 def is_room_available(reservation_data, room_name, first_day, last_day=None):
         """
         Return True if Room with 'room_name' is free during
-        the whole interval 'last_day - first_day' 
+        the whole interval 'last_day - first_day'
         (i.e. it can be booked) and False if not.
         """
         if not last_day:
-            last_day = first_day + timedelta(1) # default = 1 night
+            last_day = first_day + timedelta(1)  # default = 1 night
         # Controls
         if room_name not in rooms.keys():
             raise KeyError('Room you inserted does not exist.')
         if last_day <= first_day:
             raise ValueError('Second day must be greater than first.')
-    
+
         # Scanning  reservations
         for booking in reservation_data:
             test_start = booking.checkin
@@ -44,7 +44,7 @@ def is_room_available(reservation_data, room_name, first_day, last_day=None):
             if days_overlap and room_name == test_room:
                 return False
         return True
-    
+
 
 def is_days_overlap(start, end, test_start, test_end):
     """ Check if two checkin-checkout intervals overlap """
@@ -54,4 +54,3 @@ def is_days_overlap(start, end, test_start, test_end):
         return True
     else:
         return False
-    
