@@ -1,0 +1,2 @@
+pip-tools==1.9.0
+-e git+ssh://git@github.com/labaffa/calendar_classic.git@development#egg=calendar_classic
