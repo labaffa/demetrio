@@ -1,6 +1,6 @@
 from datetime import datetime
-
 from settings.constants import rooms, DATE_FMT
+from enum import Enum
 
 
 class Room:
@@ -9,10 +9,9 @@ class Room:
         self.no_beds = rooms[room_name]
         # TODO Add optional fields
 
-        
+
 class Reservation:
-    # Pass OrderedDict
-    def __init__(self, reservation): # reservation_id, room_name, name, surname, checkin, checkout, *args):
+    def __init__(self, reservation):
         self.id = reservation['ReservationId']
         self.room = Room(reservation['RoomId'])
         self.customer = reservation['Name'] + ' ' + reservation['Surname']
@@ -29,3 +28,9 @@ class Reservation:
         self.parking = reservation['Parking']
         self.booking_type = reservation['BookingType']
         self.breakfast = reservation['Breakfast']
+
+
+class Status(Enum):
+    active = 0
+    deleted = 1
+    in_progress = 2
