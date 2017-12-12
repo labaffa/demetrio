@@ -24,4 +24,5 @@ mandatory_fields = ['RoomId', 'Name', 'Surname',
 
 optional_fields = ['Pax', 'Parking', 'BookingType', 'Breakfast']
 
-all_fields = ['ReservationId'] + mandatory_fields + optional_fields
+all_fields = (['ReservationId'] + mandatory_fields + optional_fields +
+              ['Status'])
