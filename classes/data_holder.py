@@ -87,6 +87,8 @@ class DataHolder:
         last_used_id = int(self.data[-1].id) if self.data else 0
         new_reservation_id = last_used_id + 1
         new_reservation['ReservationId'] = new_reservation_id
+        # Setting the Reservation Status as 'active' (i.e. 0)
+        new_reservation['Status'] = 0
         # Appending a fields' values textline to 'self.source'
         with open(self.source, 'a') as f:
             new_reservation_line = string_from_reservation(new_reservation)
