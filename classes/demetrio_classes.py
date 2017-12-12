@@ -28,7 +28,7 @@ class Reservation:
         self.parking = reservation['Parking']
         self.booking_type = reservation['BookingType']
         self.breakfast = reservation['Breakfast']
-
+        self.status = reservation['Status']
 
 class Status(Enum):
     active = 0
