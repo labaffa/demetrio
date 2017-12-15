@@ -1,10 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from settings.constants import rooms, DATE_FMT, mandatory_fields, all_fields
 from utils.checkers import is_room_available
 from utils.formatters import format_date_range, date_or_date_range, reservation_from_textline, complete_reservation, string_from_reservation
 from utils.generators import date_range, generate_reservations
 from classes.demetrio_classes import Reservation
-
+import os
 
 class DataHolder:
     def __init__(self, data_source):
@@ -43,23 +43,24 @@ class DataHolder:
             dates = list(busy_days.keys())
             # Loop over reservations
             for reservation in reservation_data:
-                date = reservation.checkin
-                if date not in dates:
-                    busy_days[date] = [reservation.room.name]
-                    dates.append(date)
-                else:
-                    busy_days[date].append(reservation.room.name)
-                # Loop over days of a single reservation if no_of_nights > 1
-                number_of_nights = reservation.no_nights.days
-                if number_of_nights == 1:
-                    continue
-                for j in range(1,  number_of_nights):
-                    next_date = date + timedelta(j)
-                    if next_date not in dates:
-                        busy_days[next_date] = [reservation.room.name]
-                        dates.append(next_date)
+                if reservation.status == '0': # Active reservation
+                    date = reservation.checkin
+                    if date not in dates:
+                        busy_days[date] = [reservation.room.name]
+                        dates.append(date)
                     else:
-                        busy_days[next_date].append(reservation.room.name)
+                        busy_days[date].append(reservation.room.name)
+                        # Loop over days of a single reservation if no_of_nights > 1
+                    number_of_nights = reservation.no_nights.days
+                    if number_of_nights == 1:
+                        continue
+                    for j in range(1, number_of_nights):
+                        next_date = date + timedelta(j)
+                        if next_date not in dates:
+                            busy_days[next_date] = [reservation.room.name]
+                            dates.append(next_date)
+                        else:
+                            busy_days[next_date].append(reservation.room.name)
         return busy_days
 
     def add_booking_as_text(self, *args, **kw):
@@ -110,6 +111,7 @@ class DataHolder:
 
         If return_day_obj = True consecutives dates are given in range
         format
+        Check well, It feels buggy!!
         """
         available_days = list()
         for day, list_of_busy_rooms in self.busy_days.items():
@@ -137,3 +139,34 @@ class DataHolder:
             available_days = self.get_availability_for_room(room_name, start_day, end_day, return_day_obj=return_day_obj)
             print('Room %s is available on:' % room_name)
             print(available_days)
+
+    def delete_reservation(self, reservation_id):
+        """
+        -Set Status of reservation with id 'reservation_id' to 'deleted'
+        -A backup file is created first for extra safety.
+        -self.data and self.busy_days are then reloaded
+        """
+        # first create name for backup file
+        origin_file_name = self.source
+        root = origin_file_name.split('.')[0]
+        backup_file_name = root + '.bak'
+        # and now rename the source with the backup name
+        os.rename(self.source, backup_file_name)
+        # Once data are backuped we rewrite the source with
+        # a new reservation status
+        with open(backup_file_name, 'r') as b: # reading backup
+            with open(self.source, 'a') as f: # writing new file
+                lines_list = b.read().splitlines()
+                for line in lines_list:
+                    reservation_line = line.split('\t')
+                    # when the given reservation is found...
+                    if reservation_line[0] == str(reservation_id):
+                        # ...delete last element and add a '1' instead
+                        # (1 is code for 'deleted' in Status class)
+                        # Status is placed as last element of line!
+                        line = line[:-1] + '1'
+                    line_to_print = line + '\n'
+                    f.write(line_to_print)    
+        # por fin let's reload self.data and busy_days dictionary
+        self.data = self.reservation_data_builder() 
+        self.busy_days = self.busy_days_builder(self.data)        
