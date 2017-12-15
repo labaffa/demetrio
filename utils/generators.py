@@ -95,11 +95,13 @@ def generate_reservations(data_file, interval=200, max_no_nights=15, n=1):
             reservation_data['BookingType'] = random.choice(['Booking', 'Email', 'Phone'])
             reservation_data['Breakfast'] = random.choice(['No', 'Ticket', 'Room'])
 
+            
             booking = complete_reservation(reservation_data)
             # 'ReservtionId' is always assigned after
             # validation and creation of the reservation dict
             # (i.e. after complete_reservation())
             booking['ReservationId'] = reservation_id
+            booking['Status'] = 0
             reservations.append(Reservation(booking))
             booking_line = string_from_reservation(booking)
             f.write(booking_line)
