@@ -1,12 +1,11 @@
 import random
 from datetime import date, timedelta
-from collections import OrderedDict
 from settings.names import names # a list of names
 from settings.surnames import surnames # a list of surnames 
 from settings.constants import rooms
 from utils.checkers import is_room_available
 from utils.formatters import complete_reservation, string_from_reservation
-from classes.demetrio_classes import Reservation
+from classes.demetrio_classes import Reservation, Status
 
         
 def date_range(*args):
@@ -101,7 +100,7 @@ def generate_reservations(data_file, interval=200, max_no_nights=15, n=1):
             # validation and creation of the reservation dict
             # (i.e. after complete_reservation())
             booking['ReservationId'] = reservation_id
-            booking['Status'] = 0
+            booking['Status'] = str(Status.active)
             reservations.append(Reservation(booking))
             booking_line = string_from_reservation(booking)
             f.write(booking_line)

@@ -1,10 +1,12 @@
-from datetime import datetime, timedelta, date
-from settings.constants import rooms, DATE_FMT, mandatory_fields, all_fields
+from datetime import timedelta
+from settings.constants import rooms
 from utils.checkers import is_room_available
-from utils.formatters import format_date_range, date_or_date_range, reservation_from_textline, complete_reservation, string_from_reservation
+from utils.formatters import format_date_range, date_or_date_range, reservation_from_textline, complete_reservation, \
+    string_from_reservation, get_first_value
 from utils.generators import date_range, generate_reservations
-from classes.demetrio_classes import Reservation
+from classes.demetrio_classes import Reservation, Status
 import os
+
 
 class DataHolder:
     def __init__(self, data_source):
@@ -43,7 +45,7 @@ class DataHolder:
             dates = list(busy_days.keys())
             # Loop over reservations
             for reservation in reservation_data:
-                if reservation.status == '0': # Active reservation
+                if reservation.status == str(Status.active):
                     date = reservation.checkin
                     if date not in dates:
                         busy_days[date] = [reservation.room.name]
@@ -88,8 +90,7 @@ class DataHolder:
         last_used_id = int(self.data[-1].id) if self.data else 0
         new_reservation_id = last_used_id + 1
         new_reservation['ReservationId'] = new_reservation_id
-        # Setting the Reservation Status as 'active' (i.e. 0)
-        new_reservation['Status'] = 0
+        new_reservation['Status'] = str(Status.active)
         # Appending a fields' values textline to 'self.source'
         with open(self.source, 'a') as f:
             new_reservation_line = string_from_reservation(new_reservation)
@@ -140,7 +141,7 @@ class DataHolder:
             print('Room %s is available on:' % room_name)
             print(available_days)
 
-    def delete_reservation(self, reservation_id):
+    def delete_reservation(self, reservation_number):
         """
         -Set Status of reservation with id 'reservation_id' to 'deleted'
         -A backup file is created first for extra safety.
@@ -158,15 +159,10 @@ class DataHolder:
             with open(self.source, 'a') as f: # writing new file
                 lines_list = b.read().splitlines()
                 for line in lines_list:
-                    reservation_line = line.split('\t')
-                    # when the given reservation is found...
-                    if reservation_line[0] == str(reservation_id):
-                        # ...delete last element and add a '1' instead
-                        # (1 is code for 'deleted' in Status class)
-                        # Status is placed as last element of line!
-                        line = line[:-1] + '1'
-                    line_to_print = line + '\n'
-                    f.write(line_to_print)    
+                    res_id = get_first_value(line)
+                    if  res_id == str(reservation_number):
+                        line = line[:-1] + str(Status.deleted)
+                    f.write(line + '\n')
         # por fin let's reload self.data and busy_days dictionary
         self.data = self.reservation_data_builder() 
         self.busy_days = self.busy_days_builder(self.data)        
