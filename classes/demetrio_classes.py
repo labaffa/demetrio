@@ -30,7 +30,14 @@ class Reservation:
         self.breakfast = reservation['Breakfast']
         self.status = reservation['Status']
 
-class Status(Enum):
-    active = 0
-    deleted = 1
+
+class DemetrioEnum(Enum):
+    """Make the string representation of Enum as its value """
+    def __str__(self):
+        return u'{}'.format(self.value)
+
+
+class Status(DemetrioEnum):
+    active = 1
+    deleted = 0
     in_progress = 2
