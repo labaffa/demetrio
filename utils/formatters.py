@@ -4,6 +4,9 @@ from collections import OrderedDict
 from utils.checkers import validate_date
 
 
+get_first_value = lambda x: x.split('\t')[0]
+
+
 def complete_reservation(incomplete_reservation): 
     """
     Given a dictionary of variable number of reservation fields, 
