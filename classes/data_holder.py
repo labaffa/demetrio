@@ -186,10 +186,15 @@ class DataHolder:
         """
         # temporarily delete reserve we want to modify
         self.data = set_to_deleted(reservation_number, self.data)
+        modified_dict = reservation_dict_builder(kw,
+                                                 source_list=self.source,
+                                                 specific_id=reservation_number)
+        modified_reservation = Reservation(modified_dict)
+
         # check if new modified reservation is possible
-        checkin = kw['CheckIn'] # datetime.date object
-        checkout = kw['CheckOut']
-        room_id = kw['RoomId']
+        checkin = modified_reservation.check_in # datetime.date object
+        checkout = modified_reservation.check_out
+        room_id = modified_reservation.room.name
         available = is_room_available(self.data, room_id, checkin,
                                       checkout, msg=room_id +
                                       ' is not available ' +
@@ -205,10 +210,6 @@ class DataHolder:
         # to 'modified' and then build new reservation up...
         self.data = set_to_modified(reservation_number, self.data,
                                     status=Status.deleted)
-        modified_dict = reservation_dict_builder(kw,
-                                                 source_list=self.source,
-                                                 specific_id=reservation_number)
-        modified_reservation = Reservation(modified_dict)
         # insert modified-version as last element
         # with reservation_number ID
         for index, reservation in enumerate(self.data):
