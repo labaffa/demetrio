@@ -12,18 +12,20 @@ class Room:
 
 class Reservation:
     def __init__(self, reservation):
-        self.id = reservation['ReservationId']
+        self.id = reservation['Id']
         self.room = Room(reservation['RoomId'])
+        self.name = reservation['Name']
+        self.surname = reservation['Surname']
         self.customer = reservation['Name'] + ' ' + reservation['Surname']
         if isinstance(reservation['CheckIn'], str):
-            self.checkin = datetime.strptime(reservation['CheckIn'], DATE_FMT).date()
+            self.check_in = datetime.strptime(reservation['CheckIn'], DATE_FMT).date()
         else:
-            self.checkin = reservation['CheckIn']
+            self.check_in = reservation['CheckIn']
         if isinstance(reservation['CheckOut'], str):
-            self.checkout = datetime.strptime(reservation['CheckOut'], DATE_FMT).date()
+            self.check_out = datetime.strptime(reservation['CheckOut'], DATE_FMT).date()
         else:
-            self.checkout = reservation['CheckOut']
-        self.no_nights = self.checkout - self.checkin # a timedelta object
+            self.check_out = reservation['CheckOut']
+        self.no_nights = self.check_out - self.check_in # a timedelta object
         self.pax = reservation['Pax']
         self.parking = reservation['Parking']
         self.booking_type = reservation['BookingType']
@@ -41,3 +43,4 @@ class Status(DemetrioEnum):
     active = 1
     deleted = 0
     in_progress = 2
+    modified = 3
