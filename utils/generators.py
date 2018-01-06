@@ -99,7 +99,7 @@ def generate_reservations(data_file, interval=200, max_no_nights=15, n=1):
             # 'ReservtionId' is always assigned after
             # validation and creation of the reservation dict
             # (i.e. after complete_reservation())
-            booking['ReservationId'] = reservation_id
+            booking['Id'] = reservation_id
             booking['Status'] = str(Status.active)
             reservations.append(Reservation(booking))
             booking_line = string_from_reservation(booking)
