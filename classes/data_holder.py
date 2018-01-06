@@ -1,8 +1,11 @@
 from datetime import timedelta
 from settings.constants import rooms
 from utils.checkers import is_room_available
-from utils.formatters import format_date_range, date_or_date_range, reservation_from_textline, complete_reservation, \
-    string_from_reservation, get_first_value
+from utils.formatters import format_date_range, date_or_date_range, reservation_from_textline, complete_reservation, rename_to_bak_file, \
+    reservation_dict_builder, string_from_reservation, \
+    get_first_value, get_last_value
+from utils.miscellanea import set_to_active, set_to_deleted, \
+    set_to_modified, data_on_file
 from utils.generators import date_range, generate_reservations
 from classes.demetrio_classes import Reservation, Status
 import os
@@ -46,7 +49,7 @@ class DataHolder:
             # Loop over reservations
             for reservation in reservation_data:
                 if reservation.status == str(Status.active):
-                    date = reservation.checkin
+                    date = reservation.check_in
                     if date not in dates:
                         busy_days[date] = [reservation.room.name]
                         dates.append(date)
@@ -89,7 +92,7 @@ class DataHolder:
         # Setting sequential id
         last_used_id = int(self.data[-1].id) if self.data else 0
         new_reservation_id = last_used_id + 1
-        new_reservation['ReservationId'] = new_reservation_id
+        new_reservation['Id'] = new_reservation_id
         new_reservation['Status'] = str(Status.active)
         # Appending a fields' values textline to 'self.source'
         with open(self.source, 'a') as f:
@@ -160,9 +163,59 @@ class DataHolder:
                 lines_list = b.read().splitlines()
                 for line in lines_list:
                     res_id = get_first_value(line)
-                    if  res_id == str(reservation_number):
+                    res_status = get_last_value(line)
+                    if  (res_id == str(reservation_number) and
+                         res_status == str(Status.active)):
                         line = line[:-1] + str(Status.deleted)
                     f.write(line + '\n')
-        # por fin let's reload self.data and busy_days dictionary
+        # update data_holder
         self.data = self.reservation_data_builder() 
         self.busy_days = self.busy_days_builder(self.data)        
+
+    def modify_reservation(self, reservation_number, *args, **kw):
+        """
+        -Reservation with reservation_id is substituted by 
+        a reservation formed from kw dictionary.
+
+        -New reservation is written on source-file, after backup, in 
+        a consecutive row, with same ID (the old one is not deleted).
+
+        TODO: store old reservations  in 'history' 
+        reservation attribute
+
+        """
+        # temporarily delete reserve we want to modify
+        self.data = set_to_deleted(reservation_number, self.data)
+        # check if new modified reservation is possible
+        checkin = kw['CheckIn'] # datetime.date object
+        checkout = kw['CheckOut']
+        room_id = kw['RoomId']
+        available = is_room_available(self.data, room_id, checkin,
+                                      checkout, msg=room_id +
+                                      ' is not available ' +
+                                      format_date_range(checkin,
+                                                        checkout))
+        # If modifications are not possible we reset
+        # old reserve to 'active' and quit 
+        if not available:
+            self.data = set_to_active(reservation_number, self.data)
+            self.busy_days = self.busy_days_builder(self.data)
+            return False
+        # if it's bookable we set status of the old reserve
+        # to 'modified' and then build new reservation up...
+        self.data = set_to_modified(reservation_number, self.data,
+                                    status=Status.deleted)
+        modified_dict = reservation_dict_builder(kw,
+                                                 source_list=self.source,
+                                                 specific_id=reservation_number)
+        modified_reservation = Reservation(modified_dict)
+        # insert modified-version as last element
+        # with reservation_number ID
+        for index, reservation in enumerate(self.data):
+            if str(reservation.id) == str(int(reservation_number) + 1):
+                self.data.insert(index, modified_reservation)
+                break
+        # backup and update 
+        backup_file_name = rename_to_bak_file(self.source)
+        data_on_file(self.source, self.data)
+        self.busy_days = self.busy_days_builder(self.data)
