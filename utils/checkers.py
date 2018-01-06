@@ -1,6 +1,6 @@
 from datetime import timedelta, date, datetime
 from settings.constants import rooms, DATE_FMT
-
+from classes.demetrio_classes import Status
 
 def validate_date(date_input):
     """str -> datetime.date; datetime.date -> do nothing"""
@@ -20,7 +20,7 @@ def validate_datetime(date_input):
     raise ValueError('Data not understood')
 
 
-def is_room_available(reservation_data, room_name, first_day, last_day=None):
+def is_room_available(reservation_data, room_name, first_day, last_day=None, msg=None):
         """
         Return True if Room with 'room_name' is free during
         the whole interval 'last_day - first_day'
@@ -36,13 +36,15 @@ def is_room_available(reservation_data, room_name, first_day, last_day=None):
 
         # Scanning  reservations
         for booking in reservation_data:
-            test_start = booking.checkin
-            test_end = booking.checkout
-            test_room = booking.room.name
-            # Checking for availability
-            days_overlap = is_days_overlap(first_day, last_day, test_start, test_end)
-            if days_overlap and room_name == test_room:
-                return False
+            if booking.status == str(Status.active):
+                test_start = booking.check_in
+                test_end = booking.check_out
+                test_room = booking.room.name
+                # Checking for availability
+                days_overlap = is_days_overlap(first_day, last_day, test_start, test_end)
+                if days_overlap and room_name == test_room:
+                    print(msg)
+                    return False
         return True
 
 
