@@ -210,13 +210,22 @@ class DataHolder:
         # to 'modified' and then build new reservation up...
         self.data = set_to_modified(reservation_number, self.data,
                                     status=Status.deleted)
+
         # insert modified-version as last element
         # with reservation_number ID
+        inserted = False 
         for index, reservation in enumerate(self.data):
+            # we insert reservation just before the next one
+            # in order to keep a chronological order of modifications
+            # within elements of the Reservation list
             if str(reservation.id) == str(int(reservation_number) + 1):
                 self.data.insert(index, modified_reservation)
+                inserted = True
                 break
-        # backup and update 
+        if not inserted: # i.e. reserve to modify is last in the list 
+            self.data.insert(len(self.data), modified_reservation)
+
+        # backup and update
         backup_file_name = rename_to_bak_file(self.source)
         data_on_file(self.source, self.data)
         self.busy_days = self.busy_days_builder(self.data)
