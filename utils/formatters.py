@@ -2,7 +2,12 @@ from datetime import timedelta
 from settings.constants import DATE_FMT, all_fields, mandatory_fields, optional_fields
 from collections import OrderedDict
 from utils.checkers import validate_date
+from classes.demetrio_classes import Reservation, Status
+import os
+import re
 
+get_first_value = lambda x: x.split('\t')[0]
+get_last_value = lambda x: x.split('\t')[-1]
 
 def complete_reservation(incomplete_reservation): 
     """
@@ -114,3 +119,74 @@ def date_or_date_range(ordered_dates):
     # Append the last dates left
     date_ranges.append(format_date_range(range_start, range_end))
     return date_ranges
+
+
+def rename_to_bak_file(source_file):
+    """    'Source_root.extension' -> 'Source_root.bak' """
+
+    origin_file = str(source_file)
+    root = "".join(origin_file.split('.')[:-1])
+    backup_file = root + '.bak'
+    os.rename(origin_file, backup_file)
+    return backup_file
+
+
+def reservation_dict_builder(incomplete_reservation, source_list=None,
+                             specific_id=None):
+    """
+    Return a Reservation dict built from given incomplete_reservation 
+    with ID assignement based on source_list element count.
+
+    Specific_id should be passed in case of reservation modifications
+    (see for example 'modify_reservation' method in DataHolder class
+
+    """
+    
+    if specific_id:
+        reservation_id = specific_id
+    else:
+        last_used_id = int(source_list[-1].id) if source_list else 0
+        reservation_id = last_used_id + 1
+    reservation = complete_reservation(incomplete_reservation)
+    reservation['Id'] = reservation_id        
+    reservation['Status'] = str(Status.active)
+    return reservation
+
+
+def snake_from_camel(camel_string):
+    """ CamelString -> camel_string """
+
+    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', camel_string)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
+
+def camel_from_snake(snake_string):
+    """ snake_string -> SnakeString """
+    
+    camel_string = snake_string.title()
+    splits_number = 0
+    for index, char in enumerate(snake_string):
+        if char == '_':
+            split_pos = index - splits_number
+            camel_string = (camel_string[:split_pos] +
+                            camel_string[split_pos + 1:].title())
+            splits_number += 1
+    return camel_string if splits_number else snake_string
+
+
+def dict_from_reservation_object(reservation_obj):
+    """
+    Return same dictionary used to create 'reservation_obj'
+    Can be seen as inverse operation of Reservation(dict)
+
+    """
+    
+    reservation_dict = {}
+    reservation_dict['RoomId'] = reservation_obj.room.name
+    for attr, value in vars(reservation_obj).items():
+        for field in all_fields:
+            if str(attr) == snake_from_camel(field):
+                reservation_dict[field] = value
+    return reservation_dict
+
+
